@@ -32,16 +32,23 @@ jobs:
 
       - name: Install dependencies
         working-directory: app
-        run: npm ci --no-audit --no-fund
+        run: npm install --no-audit --no-fund
         env:
           CI: '1'
 
       - name: Expo prebuild (generate android project)
         working-directory: app
-        run: npx expo prebuild --platform android --clean --no-install
+        run: npx expo prebuild --platform android --clean
         env:
           CI: '1'
           EXPO_NO_TELEMETRY: '1'
+
+      - name: Verify autolinking (catch missing expo modules early)
+        working-directory: app
+        run: |
+          npx expo-modules-autolinking resolve --platform android > /dev/null
+          echo "autolinking ok"
+          grep -c "expo-module-gradle-plugin" android/settings.gradle || true
 
       - name: Build release APK
         working-directory: app/android
