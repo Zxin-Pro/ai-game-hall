@@ -19,13 +19,13 @@ type Item =
   | { kind: 'round'; round: number; phaseName: string; key: string };
 
 export default function RoomScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, demo: demoParam } = useLocalSearchParams<{ id: string; demo?: string }>();
   const insets = useSafeAreaInsets();
   const listRef = useRef<FlatList<Item>>(null);
 
   const {
     room, players, messages, uiSchema, summary, connected, waitingForMe, paused, loading, error,
-    enter, leave, send, act, togglePause, myPlayerId, setMyPlayerId,
+    enter, leave, send, act, togglePause, myPlayerId, setMyPlayerId, demo,
   } = useRoom();
 
   const me = useAuth((s) => s.user);
@@ -34,10 +34,10 @@ export default function RoomScreen() {
   const [highlight, setHighlight] = useState<string | null>(null);
 
   useEffect(() => {
-    if (id) void enter(id);
+    if (id) void enter(id, demoParam);
     return () => { void leave(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, demoParam]);
 
   useEffect(() => {
     const mine = players.find((p) => p.user_id === me?.id);
@@ -184,6 +184,7 @@ export default function RoomScreen() {
             </Text>
             <View className={`ml-2 w-1.5 h-1.5 rounded-full ${connected ? 'bg-mint' : 'bg-danger'}`} />
             {paused && <Text className="text-warm text-[10px] ml-2">已暂停</Text>}
+            {demo && <Text className="text-warm text-[10px] ml-2">演示</Text>}
           </View>
           <Text className="text-white/35 text-[10px] mt-0.5" numberOfLines={1}>
             第 {room.round} 轮 · {phaseLabel(room.phase)} · {room.topic || '无话题'}

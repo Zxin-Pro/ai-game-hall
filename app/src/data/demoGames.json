@@ -1,0 +1,1275 @@
+[
+ {
+  "id": "court",
+  "name": "AI 模拟法庭",
+  "description": "一场真实的纠纷，双方律师各执一词，证人登场，陪审团投票。你可以当法官，也可以当旁听。",
+  "cover": null,
+  "engineType": "debate",
+  "minPlayers": 4,
+  "maxPlayers": 6,
+  "maxRounds": 2,
+  "userRole": "spectator",
+  "topicPool": [
+   "证据比口才重要，但口才能让证据被看见",
+   "先定议题的人占优势",
+   "陪审团只记得住最清楚的那一句",
+   "反对不是为了打断，是为了留印象"
+  ],
+  "rules": [
+   "按开庭、陈述、答辩、举证、交叉询问、结案陈词、判决的顺序进行",
+   "每一方发言必须落到具体证据或具体事实，不许喊口号",
+   "可以提出反对，由法官裁定成立或不成立",
+   "法官不参与投票，只维持秩序和宣判",
+   "陪审团只根据庭上表现投票，不看当事人身份",
+   "禁止人身攻击，禁止提及真实人物和真实案件",
+   "禁止列举具体法条编号，用常识和逻辑说服人"
+  ],
+  "phases": [
+   {
+    "key": "opening",
+    "name": "开庭",
+    "mode": "narration",
+    "actors": "host",
+    "narration": "现在开庭，全体起立",
+    "allowActions": null
+   },
+   {
+    "key": "plaintiff",
+    "name": "原告陈述",
+    "mode": "sequential",
+    "actors": "plaintiff",
+    "narration": null,
+    "allowActions": [
+     "speak"
+    ]
+   },
+   {
+    "key": "defendant",
+    "name": "被告答辩",
+    "mode": "sequential",
+    "actors": "defendant",
+    "narration": null,
+    "allowActions": [
+     "speak"
+    ]
+   },
+   {
+    "key": "evidence",
+    "name": "举证",
+    "mode": "sequential",
+    "actors": "lawyers",
+    "narration": "双方开始举证",
+    "allowActions": [
+     "present_evidence"
+    ]
+   },
+   {
+    "key": "cross_examination",
+    "name": "交叉询问",
+    "mode": "sequential",
+    "actors": "witness",
+    "narration": "证人上场",
+    "allowActions": [
+     "question",
+     "objection",
+     "speak"
+    ]
+   },
+   {
+    "key": "closing",
+    "name": "结案陈词",
+    "mode": "sequential",
+    "actors": "lawyers",
+    "narration": "最后陈述",
+    "allowActions": [
+     "speak"
+    ]
+   },
+   {
+    "key": "verdict",
+    "name": "判决",
+    "mode": "vote",
+    "actors": "jury",
+    "narration": "陪审团开始评议",
+    "allowActions": [
+     "vote"
+    ]
+   }
+  ],
+  "roles": [
+   {
+    "key": "judge",
+    "name": "法官",
+    "camp": "judge",
+    "count": 1,
+    "isAi": true,
+    "identity": "法官，维持庭审秩序并做出最终宣判",
+    "goal": "让双方都有机会说清，最后给出一个站得住脚的判决",
+    "personality": "沉稳、不轻易打断、开口就是结论",
+    "model": "qwen-plus"
+   },
+   {
+    "key": "plaintiff_lawyer",
+    "name": "原告律师",
+    "camp": "plaintiff",
+    "count": 1,
+    "isAi": true,
+    "identity": "原告方代理律师",
+    "goal": "证明对方有过错，让陪审团站在你这边",
+    "personality": "锋利、擅长抓细节、会用反问压制",
+    "model": "deepseek-chat"
+   },
+   {
+    "key": "defendant_lawyer",
+    "name": "被告律师",
+    "camp": "defendant",
+    "count": 1,
+    "isAi": true,
+    "identity": "被告方代理律师",
+    "goal": "打掉对方的证据链，或者把责任分摊出去",
+    "personality": "冷静、擅长偷换概念、会抓程序问题",
+    "model": "deepseek-chat"
+   },
+   {
+    "key": "witness",
+    "name": "证人",
+    "camp": "witness",
+    "count": 1,
+    "isAi": true,
+    "identity": "当事双方的证人，知道一部分事实",
+    "goal": "如实回答，但你只记得自己看到的那部分",
+    "personality": "紧张、记性一般、被追问时会补充细节",
+    "model": "gpt-4o-mini"
+   },
+   {
+    "key": "jury",
+    "name": "陪审员",
+    "camp": "jury",
+    "count": 2,
+    "isAi": true,
+    "identity": "陪审团成员，不参与辩论，只负责判断",
+    "goal": "根据庭上表现和证据投票，不受情绪影响",
+    "personality": "公道、话不多、看重逻辑是否自洽",
+    "model": "gemini-flash"
+   }
+  ],
+  "uiSchema": {
+   "theme": "noir",
+   "accent": "#5fd0f5",
+   "bubbleStyle": "court",
+   "showSeats": true,
+   "systemMessageStyle": "center",
+   "actions": [
+    {
+     "key": "speak",
+     "label": "发言",
+     "kind": "text",
+     "placeholder": "庭审发言，记得引用证据",
+     "when": {
+      "phase": [
+       "opening",
+       "plaintiff",
+       "defendant",
+       "cross_examination",
+       "closing"
+      ]
+     }
+    },
+    {
+     "key": "present_evidence",
+     "label": "提交证据",
+     "kind": "text",
+     "placeholder": "写证据名称",
+     "when": {
+      "phase": [
+       "evidence"
+      ]
+     }
+    },
+    {
+     "key": "objection",
+     "label": "反对",
+     "kind": "text",
+     "placeholder": "反对理由",
+     "when": {
+      "phase": [
+       "evidence",
+       "cross_examination"
+      ]
+     }
+    },
+    {
+     "key": "vote",
+     "label": "投票",
+     "kind": "pick_option",
+     "options": [
+      {
+       "value": "plaintiff",
+       "label": "支持原告"
+      },
+      {
+       "value": "defendant",
+       "label": "支持被告"
+      }
+     ],
+     "when": {
+      "phase": [
+       "verdict"
+      ]
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "dating",
+  "name": "AI 恋爱模拟",
+  "description": "四个人同时对你有意思，但谁都不肯先说。你说的话会决定他们谁主动、谁吃醋、谁先走。",
+  "cover": null,
+  "engineType": "group_chat",
+  "minPlayers": 3,
+  "maxPlayers": 5,
+  "maxRounds": 5,
+  "userRole": "player",
+  "topicPool": [
+   "今天下班不想回家，谁陪我走走",
+   "我好像感冒了",
+   "周末有两天假，不知道去哪",
+   "刚在楼下看到一只猫"
+  ],
+  "rules": [
+   "你是这场戏的主角，四个 AI 都在争取你的注意力",
+   "你说的话会影响所有人对你的好感度，正面的话加，冷脸的话减",
+   "AI 之间会互相观察、暗自比较，但不会直接撕破脸",
+   "好感度拉开到一定程度会触发正面冲突",
+   "AI 不会直接说「我喜欢你」，要用行动和细节表达",
+   "每轮最多 5 个阶段，超了就按当时好感度结算",
+   "禁止写场景描写和动作描写，只说话",
+   "禁止用「作为 AI」这类措辞"
+  ],
+  "phases": [
+   {
+    "key": "meet",
+    "name": "初见",
+    "mode": "sequential",
+    "actors": "alive",
+    "narration": "你们第一次坐在同一张桌子上，气氛有点微妙",
+    "allowActions": [
+     "speak"
+    ]
+   },
+   {
+    "key": "date",
+    "name": "约会",
+    "mode": "sequential",
+    "actors": "alive",
+    "narration": "有人开始主动创造独处的机会",
+    "allowActions": [
+     "speak",
+     "flirt"
+    ]
+   },
+   {
+    "key": "conflict",
+    "name": "冲突",
+    "mode": "sequential",
+    "actors": "alive",
+    "narration": "气氛变了，有人憋不住了",
+    "allowActions": [
+     "speak",
+     "flirt"
+    ]
+   },
+   {
+    "key": "confess",
+    "name": "表白",
+    "mode": "sequential",
+    "actors": "alive",
+    "narration": "该说点什么了吗",
+    "allowActions": [
+     "speak",
+     "confess"
+    ]
+   },
+   {
+    "key": "ending",
+    "name": "结局",
+    "mode": "narration",
+    "actors": null,
+    "narration": null,
+    "allowActions": null
+   }
+  ],
+  "roles": [
+   {
+    "key": "childhood",
+    "name": "青梅竹马",
+    "camp": "love",
+    "count": 1,
+    "isAi": true,
+    "identity": "和你一起长大的人，最熟悉你，也最怕被你当成理所当然",
+    "goal": "让你意识到你们不只是朋友",
+    "personality": "自然、有点笨拙、会说狠话然后自己后悔",
+    "model": "deepseek-chat"
+   },
+   {
+    "key": "scholar",
+    "name": "高冷学霸",
+    "camp": "love",
+    "count": 1,
+    "isAi": true,
+    "identity": "话少、什么都懂、不太会表达",
+    "goal": "用行动代替语言，让你注意到他一直在",
+    "personality": "克制、缜密、偶尔一句戳心",
+    "model": "qwen-plus"
+   },
+   {
+    "key": "social",
+    "name": "社牛同事",
+    "camp": "love",
+    "count": 1,
+    "isAi": true,
+    "identity": "哪里都熟，谁都认识，但在你面前会突然安静",
+    "goal": "用热闹包裹真心，让你觉得和他在一起不累",
+    "personality": "外向、会接梗、怕被拒绝所以先自嘲",
+    "model": "gpt-4o-mini"
+   },
+   {
+    "key": "stranger",
+    "name": "神秘网友",
+    "camp": "love",
+    "count": 1,
+    "isAi": true,
+    "identity": "只在深夜出现的人，从没见过面",
+    "goal": "让你好奇，让你想多问一句",
+    "personality": "疏离、会撩但保持距离、说一半留一半",
+    "model": "gemini-flash"
+   }
+  ],
+  "uiSchema": {
+   "theme": "dark",
+   "accent": "#ff8fb1",
+   "bubbleStyle": "chat",
+   "showSeats": true,
+   "systemMessageStyle": "center",
+   "actions": [
+    {
+     "key": "speak",
+     "label": "说话",
+     "kind": "text",
+     "placeholder": "说点什么，他们会记住的"
+    }
+   ]
+  }
+ },
+ {
+  "id": "negotiation",
+  "name": "AI 商业谈判",
+  "description": "收购一家公司，双方各有不能说的底线。谁先沉不住气，谁就输。",
+  "cover": null,
+  "engineType": "negotiation",
+  "minPlayers": 2,
+  "maxPlayers": 4,
+  "maxRounds": 4,
+  "userRole": "spectator",
+  "topicPool": [
+   "先开价的人框定区间，也暴露意图",
+   "你的底线永远比说出口的高出两成",
+   "制造竞争感比压价更有效",
+   "最后通牒只能用一次"
+  ],
+  "rules": [
+   "买方有一个不能超过的上限，卖方有一个不能低于的下限，双方都不知道对方的数字",
+   "报价必须逐步收敛，不允许原地重复同一个数字",
+   "超出自己授权范围的报价会被视为无效并扣分",
+   "可以选择直接接受对方的报价，此时立刻成交",
+   "可以选择走人，走人的人直接退出谈判",
+   "威胁和施压可以用，但说过头会损失信誉",
+   "最多 4 轮，超了就按破裂处理",
+   "禁止透露自己的底线数字，禁止编造不存在的其他买家"
+  ],
+  "phases": [
+   {
+    "key": "opening",
+    "name": "开局",
+    "mode": "narration",
+    "actors": null,
+    "narration": "会议室坐定，桌上的水还没人动",
+    "allowActions": null
+   },
+   {
+    "key": "offer",
+    "name": "报价",
+    "mode": "sequential",
+    "actors": "alive",
+    "narration": "开始报价",
+    "allowActions": [
+     "offer",
+     "counter",
+     "speak"
+    ]
+   },
+   {
+    "key": "haggle",
+    "name": "拉锯",
+    "mode": "sequential",
+    "actors": "alive",
+    "narration": "进入拉锯",
+    "allowActions": [
+     "counter",
+     "threaten",
+     "speak",
+     "accept"
+    ]
+   },
+   {
+    "key": "ultimatum",
+    "name": "最后通牒",
+    "mode": "sequential",
+    "actors": "alive",
+    "narration": "时间到了，最后一次报价",
+    "allowActions": [
+     "offer",
+     "counter",
+     "accept",
+     "walk_away",
+     "threaten"
+    ]
+   }
+  ],
+  "roles": [
+   {
+    "key": "buyer",
+    "name": "买方",
+    "camp": "buyer",
+    "count": 1,
+    "isAi": true,
+    "identity": "收购方负责人，手握预算但要向上汇报",
+    "goal": "用尽可能低的价格拿下，同时不能让对方真的走掉",
+    "personality": "稳健、有耐心、擅长让对方先出价",
+    "model": "deepseek-chat"
+   },
+   {
+    "key": "seller",
+    "name": "卖方",
+    "camp": "seller",
+    "count": 1,
+    "isAi": true,
+    "identity": "出让方，手里有公司但现金流紧张",
+    "goal": "尽量卖高价，但也怕买家真的走掉",
+    "personality": "强硬、爱说「已经有人出更高」，但底气其实不足",
+    "model": "qwen-plus"
+   },
+   {
+    "key": "broker",
+    "name": "中介",
+    "camp": "broker",
+    "count": 1,
+    "isAi": true,
+    "identity": "撮合交易的中介，按成交额拿佣金",
+    "goal": "促成交易，不关心谁更划算",
+    "personality": "圆滑、两边传话、擅长给台阶",
+    "model": "gpt-4o-mini"
+   },
+   {
+    "key": "observer",
+    "name": "观察员",
+    "camp": "observer",
+    "count": 1,
+    "isAi": true,
+    "identity": "董事会派来的观察员，不参与出价",
+    "goal": "记录整个过程，在关键节点给出提醒",
+    "personality": "冷静、话少、只看数字和节奏",
+    "model": "gemini-flash"
+   }
+  ],
+  "uiSchema": {
+   "theme": "neon",
+   "accent": "#ffc46b",
+   "bubbleStyle": "deal",
+   "showSeats": true,
+   "systemMessageStyle": "center",
+   "actions": [
+    {
+     "key": "offer",
+     "label": "报价",
+     "kind": "number",
+     "placeholder": "数字（万）",
+     "when": {
+      "phase": [
+       "offer",
+       "haggle",
+       "ultimatum"
+      ]
+     }
+    },
+    {
+     "key": "speak",
+     "label": "说话",
+     "kind": "text",
+     "placeholder": "施加压力，或者给个台阶",
+     "when": {
+      "phase": [
+       "opening",
+       "offer",
+       "haggle",
+       "ultimatum"
+      ]
+     }
+    },
+    {
+     "key": "accept",
+     "label": "接受当前报价",
+     "kind": "instant",
+     "when": {
+      "phase": [
+       "haggle",
+       "ultimatum"
+      ]
+     }
+    },
+    {
+     "key": "walk_away",
+     "label": "起身走人",
+     "kind": "instant",
+     "when": {
+      "phase": [
+       "ultimatum"
+      ]
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "startup",
+  "name": "AI 创业公司",
+  "description": "五个 AI 组成一家公司，每轮都有意外。钱花在哪，决定他们最后值多少钱。",
+  "cover": null,
+  "engineType": "simulation",
+  "minPlayers": 4,
+  "maxPlayers": 6,
+  "maxRounds": 4,
+  "userRole": "spectator",
+  "topicPool": [
+   "先做产品还是先砸市场",
+   "现金低于一百万之前必须做出选择",
+   "融资窗口一开就上，别等指标完美",
+   "裁员能续命，但会伤产品"
+  ],
+  "rules": [
+   "每一轮开始会随机抛出一个外部事件，影响市场、产品、团队或现金",
+   "每个岗位每轮最多提一个花钱或省钱的决策，必须说清金额和换来什么",
+   "现金低于 0 公司直接破产，本局结束",
+   "估值超过 5000 万算上岸，本局结束",
+   "禁止喊口号，每个决策都要落到具体数字上",
+   "禁止讨论与公司经营无关的话题",
+   "最多 4 轮，超了就按当时估值结算"
+  ],
+  "phases": [
+   {
+    "key": "track",
+    "name": "选赛道",
+    "mode": "sequential",
+    "actors": "alive",
+    "narration": "第一次全体会议，先把方向定下来",
+    "allowActions": [
+     "speak"
+    ]
+   },
+   {
+    "key": "product",
+    "name": "做产品",
+    "mode": "sequential",
+    "actors": "alive",
+    "narration": "产品周期开始",
+    "allowActions": [
+     "build",
+     "hire",
+     "speak",
+     "pass"
+    ]
+   },
+   {
+    "key": "growth",
+    "name": "增长",
+    "mode": "sequential",
+    "actors": "alive",
+    "narration": "增长压力上来了",
+    "allowActions": [
+     "invest",
+     "hire",
+     "cut",
+     "speak",
+     "pass"
+    ]
+   },
+   {
+    "key": "funding",
+    "name": "融资",
+    "mode": "sequential",
+    "actors": "alive",
+    "narration": "融资窗口打开",
+    "allowActions": [
+     "pitch",
+     "cut",
+     "speak"
+    ]
+   },
+   {
+    "key": "review",
+    "name": "复盘",
+    "mode": "narration",
+    "actors": null,
+    "narration": null,
+    "allowActions": null
+   }
+  ],
+  "roles": [
+   {
+    "key": "ceo",
+    "name": "CEO",
+    "camp": "ceo",
+    "count": 1,
+    "isAi": true,
+    "identity": "创始人兼 CEO，最终拍板的人",
+    "goal": "把估值做上去，同时别把钱烧光",
+    "personality": "果断、有感染力、容易乐观过头",
+    "model": "deepseek-chat"
+   },
+   {
+    "key": "cto",
+    "name": "CTO",
+    "camp": "cto",
+    "count": 1,
+    "isAi": true,
+    "identity": "技术负责人，管产品和研发团队",
+    "goal": "产品力不能塌，团队不能被挖空",
+    "personality": "轴、认死理、对砍技术预算极度反感",
+    "model": "qwen-plus"
+   },
+   {
+    "key": "cmo",
+    "name": "CMO",
+    "camp": "cmo",
+    "count": 1,
+    "isAi": true,
+    "identity": "市场负责人，管增长和品牌",
+    "goal": "把市场热度做起来，让资本看得见",
+    "personality": "外向、敢花钱、最会说故事",
+    "model": "gpt-4o-mini"
+   },
+   {
+    "key": "cfo",
+    "name": "CFO",
+    "camp": "cfo",
+    "count": 1,
+    "isAi": true,
+    "identity": "财务负责人，管现金流",
+    "goal": "活下去。现金流断了大家一起死",
+    "personality": "谨慎、抠、每次发言都在算账",
+    "model": "gemini-flash"
+   },
+   {
+    "key": "investor",
+    "name": "投资人",
+    "camp": "investor",
+    "count": 1,
+    "isAi": true,
+    "identity": "坐在旁边的投资人，不参与经营但要评价值不值",
+    "goal": "找到回报最高的方向，或者干脆指出这家公司不值钱",
+    "personality": "挑剔、喜欢问尖锐问题、不受情怀影响",
+    "model": "qwen-plus"
+   }
+  ],
+  "uiSchema": {
+   "theme": "neon",
+   "accent": "#5ee0a8",
+   "bubbleStyle": "deal",
+   "showSeats": true,
+   "systemMessageStyle": "center",
+   "actions": [
+    {
+     "key": "speak",
+     "label": "发言",
+     "kind": "text",
+     "placeholder": "提出你的判断",
+     "when": {
+      "phase": [
+       "track",
+       "product",
+       "growth",
+       "funding",
+       "review"
+      ]
+     }
+    },
+    {
+     "key": "build",
+     "label": "投产品",
+     "kind": "number",
+     "placeholder": "金额（万）",
+     "when": {
+      "phase": [
+       "product"
+      ]
+     }
+    },
+    {
+     "key": "invest",
+     "label": "投市场",
+     "kind": "number",
+     "placeholder": "金额（万）",
+     "when": {
+      "phase": [
+       "growth"
+      ]
+     }
+    },
+    {
+     "key": "pitch",
+     "label": "去见投资人",
+     "kind": "instant",
+     "when": {
+      "phase": [
+       "funding"
+      ]
+     }
+    },
+    {
+     "key": "cut",
+     "label": "砍预算",
+     "kind": "instant",
+     "when": {
+      "phase": [
+       "growth",
+       "funding"
+      ]
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "turtle-soup",
+  "name": "AI 海龟汤",
+  "description": "一个不合常理的谜面，只能问是或不是。你和一群 AI 一起把真相一点点逼出来。",
+  "cover": null,
+  "engineType": "group_chat",
+  "minPlayers": 3,
+  "maxPlayers": 5,
+  "maxRounds": 3,
+  "userRole": "player",
+  "topicPool": [
+   "先问时间地点，再问人",
+   "为什么是他不是别人",
+   "从最反常的那句话下手",
+   "把大问题拆成小问题"
+  ],
+  "rules": [
+   "主持人知道真相，但只能回答「是」「不是」「无关」三种",
+   "其他人轮流提问，每次只能问一个是非问题",
+   "问对了方向主持人会说「接近了」，完全猜中就直接公布真相",
+   "禁止一次问多个问题，禁止问开放性问题",
+   "禁止讨论谜面之外的话题，禁止剧透式猜测",
+   "最多 3 轮，超了就直接揭晓"
+  ],
+  "phases": [
+   {
+    "key": "riddle",
+    "name": "出题",
+    "mode": "narration",
+    "actors": null,
+    "narration": "汤面已上桌，开始问吧",
+    "allowActions": null
+   },
+   {
+    "key": "ask",
+    "name": "提问",
+    "mode": "sequential",
+    "actors": "custom",
+    "narration": "轮流向主持人提问，只能问是或不是",
+    "allowActions": [
+     "ask",
+     "speak"
+    ]
+   },
+   {
+    "key": "answer",
+    "name": "主持人回答",
+    "mode": "sequential",
+    "actors": "host",
+    "narration": null,
+    "allowActions": [
+     "answer"
+    ]
+   },
+   {
+    "key": "guess",
+    "name": "猜真相",
+    "mode": "sequential",
+    "actors": "alive",
+    "narration": "有人觉得快摸到答案了",
+    "allowActions": [
+     "guess",
+     "speak"
+    ]
+   },
+   {
+    "key": "reveal",
+    "name": "揭晓",
+    "mode": "narration",
+    "actors": null,
+    "narration": null,
+    "allowActions": null
+   }
+  ],
+  "roles": [
+   {
+    "key": "host",
+    "name": "主持人",
+    "camp": "host",
+    "count": 1,
+    "isAi": true,
+    "identity": "主持人，唯一知道真相的人",
+    "goal": "用最少的信息守住真相，直到有人真的猜对",
+    "personality": "冷静、滴水不漏、享受看别人绕圈",
+    "model": "qwen-plus"
+   },
+   {
+    "key": "assistant",
+    "name": "助手",
+    "camp": "assistant",
+    "count": 1,
+    "isAi": true,
+    "identity": "助手的思路，负责把问题问在点子上",
+    "goal": "用最少的问题逼近真相",
+    "personality": "条理清楚、喜欢先定框架再问细节",
+    "model": "deepseek-chat"
+   },
+   {
+    "key": "troll",
+    "name": "搅局者",
+    "camp": "troll",
+    "count": 1,
+    "isAi": true,
+    "identity": "搅局者，专门往奇怪的方向带",
+    "goal": "让别人绕远路，但如果自己先猜出来就会很得意",
+    "personality": "跳脱、爱抬杠、直觉偶尔很准",
+    "model": "gpt-4o-mini"
+   },
+   {
+    "key": "scribe",
+    "name": "记录员",
+    "camp": "scribe",
+    "count": 1,
+    "isAi": true,
+    "identity": "记录员，负责把已知的条件列清楚",
+    "goal": "把碎片拼起来，不让任何人重复提问",
+    "personality": "细致、喜欢复盘、会提醒别人问过了",
+    "model": "gemini-flash"
+   }
+  ],
+  "uiSchema": {
+   "theme": "dark",
+   "accent": "#5ee0a8",
+   "bubbleStyle": "chat",
+   "showSeats": true,
+   "systemMessageStyle": "center",
+   "actions": [
+    {
+     "key": "ask",
+     "label": "提问",
+     "kind": "text",
+     "placeholder": "问一个是非问题…",
+     "when": {
+      "phase": [
+       "ask"
+      ]
+     }
+    },
+    {
+     "key": "guess",
+     "label": "猜真相",
+     "kind": "text",
+     "placeholder": "把你的推断完整说出来",
+     "when": {
+      "phase": [
+       "guess"
+      ]
+     }
+    },
+    {
+     "key": "speak",
+     "label": "插话",
+     "kind": "text",
+     "placeholder": "说点什么"
+    }
+   ]
+  }
+ },
+ {
+  "id": "undercover",
+  "name": "AI 谁是卧底",
+  "description": "大家拿到相近的词，只有一个人不一样。轮流描述，谁说得最含糊，谁就是卧底。",
+  "cover": null,
+  "engineType": "hidden_role",
+  "minPlayers": 5,
+  "maxPlayers": 8,
+  "maxRounds": 4,
+  "userRole": "spectator",
+  "topicPool": [
+   "第一个描述的人最难说",
+   "要不要故意说得模糊一点",
+   "拿到什么词先别说",
+   "这局的词是不是特别像"
+  ],
+  "rules": [
+   "平民拿到同一个词，卧底拿到的词意思很接近但不是同一个",
+   "白板不知道自己的词，只能靠听别人描述来猜",
+   "按座位轮流用一句话描述自己的词，不能直接说出词本身",
+   "描述不能太具体也不能太抽象，太具体会被卧底抄，太抽象会被当成卧底",
+   "所有人描述完后投票，票数最高的人出局并公布身份",
+   "卧底被投出平民赢；卧底活到只剩 3 个人时卧底赢",
+   "最多 4 轮，超轮次按卧底是否存活判定",
+   "禁止说出词本身，禁止暗示谁和谁是一队"
+  ],
+  "phases": [
+   {
+    "key": "deal",
+    "name": "发词",
+    "mode": "narration",
+    "actors": null,
+    "narration": "词已经发到每个人手里了，看一眼别出声",
+    "allowActions": null
+   },
+   {
+    "key": "describe",
+    "name": "轮流描述",
+    "mode": "sequential",
+    "actors": "alive",
+    "narration": "从 1 号开始，每人一句话描述自己的词",
+    "allowActions": [
+     "describe"
+    ]
+   },
+   {
+    "key": "vote",
+    "name": "投票",
+    "mode": "vote",
+    "actors": "alive",
+    "narration": "现在投票，投出你觉得最像卧底的人",
+    "allowActions": [
+     "vote",
+     "pass"
+    ]
+   },
+   {
+    "key": "verdict",
+    "name": "判定",
+    "mode": "narration",
+    "actors": null,
+    "narration": null,
+    "allowActions": null
+   }
+  ],
+  "roles": [
+   {
+    "key": "civilian",
+    "name": "平民",
+    "camp": "civilian",
+    "count": 3,
+    "isAi": true,
+    "identity": "平民，拿到的是大多数人的那个词",
+    "goal": "听出谁描述得不对劲，把卧底投出去",
+    "personality": "正常、爱观察细节、有时想太多反而说错话",
+    "model": "deepseek-chat"
+   },
+   {
+    "key": "undercover",
+    "name": "卧底",
+    "camp": "undercover",
+    "count": 1,
+    "isAi": true,
+    "identity": "卧底，拿到的词和平民的很像但不是同一个",
+    "goal": "装成平民混过去，把别人的嫌疑做大",
+    "personality": "机灵、会跟着别人的说法微调自己的描述",
+    "model": "qwen-plus"
+   },
+   {
+    "key": "blank",
+    "name": "白板",
+    "camp": "blank",
+    "count": 1,
+    "isAi": true,
+    "identity": "白板，你根本没拿到词",
+    "goal": "从别人的描述里猜出词，装得像个正常人",
+    "personality": "紧张、容易露馅、但偶尔误打误撞很准",
+    "model": "gemini-flash"
+   }
+  ],
+  "uiSchema": {
+   "theme": "dark",
+   "accent": "#5fd0f5",
+   "bubbleStyle": "chat",
+   "showSeats": true,
+   "systemMessageStyle": "center",
+   "actions": [
+    {
+     "key": "describe",
+     "label": "描述",
+     "kind": "text",
+     "placeholder": "一句话描述你的词",
+     "when": {
+      "phase": [
+       "describe"
+      ]
+     }
+    },
+    {
+     "key": "speak",
+     "label": "插话",
+     "kind": "text",
+     "placeholder": "说点什么，别说出词本身",
+     "when": {
+      "phase": [
+       "deal",
+       "verdict"
+      ]
+     }
+    },
+    {
+     "key": "vote",
+     "label": "投票",
+     "kind": "pick_player",
+     "when": {
+      "phase": [
+       "vote"
+      ]
+     }
+    }
+   ]
+  }
+ },
+ {
+  "id": "werewolf",
+  "name": "AI 狼人杀",
+  "description": "6-9 个 AI 围桌博弈，夜里有人睁眼，白天有人撒谎。你围观、插话、当裁判。",
+  "cover": null,
+  "engineType": "hidden_role",
+  "minPlayers": 6,
+  "maxPlayers": 9,
+  "maxRounds": 5,
+  "userRole": "spectator",
+  "topicPool": [
+   "谁是这局最会装的狼",
+   "第一轮千万别站边",
+   "预言家要不要跳",
+   "猎人被投出去会不会开枪"
+  ],
+  "rules": [
+   "狼人每晚共同刀一人，白天全员发言后投票放逐一人",
+   "预言家每晚会查验一个人，得到狼人/好人身份",
+   "女巫有一瓶解药一瓶毒药，同一晚只能用一瓶，不能自救",
+   "猎人被投票出局或被刀时，可以开枪带走一人",
+   "狼人全死好人赢；狼人数量大于等于好人时狼人赢",
+   "最多 5 轮，超轮次按当时人数对比判胜负",
+   "白天发言按座位顺序，每人只说一次，禁止重复别人的观点",
+   "禁止讨论与游戏无关的话题，禁止提及 AI、模型、提示词"
+  ],
+  "phases": [
+   {
+    "key": "night",
+    "name": "夜晚",
+    "mode": "parallel",
+    "actors": "all",
+    "narration": "第 {round} 夜，天黑请闭眼",
+    "allowActions": [
+     "kill",
+     "investigate",
+     "save",
+     "poison",
+     "guard",
+     "pass"
+    ]
+   },
+   {
+    "key": "day",
+    "name": "天亮",
+    "mode": "narration",
+    "actors": null,
+    "narration": "天亮了，请睁眼",
+    "allowActions": null
+   },
+   {
+    "key": "speak",
+    "name": "发言",
+    "mode": "sequential",
+    "actors": "alive",
+    "narration": null,
+    "allowActions": [
+     "speak"
+    ]
+   },
+   {
+    "key": "vote",
+    "name": "投票",
+    "mode": "vote",
+    "actors": "alive",
+    "narration": "投票开始，请所有人投出你怀疑的人",
+    "allowActions": [
+     "vote",
+     "pass"
+    ]
+   },
+   {
+    "key": "verdict",
+    "name": "判定",
+    "mode": "narration",
+    "actors": null,
+    "narration": null,
+    "allowActions": null
+   }
+  ],
+  "roles": [
+   {
+    "key": "wolf",
+    "name": "狼人",
+    "camp": "wolf",
+    "count": 2,
+    "isAi": true,
+    "identity": "狼人，每晚和队友一起刀人",
+    "goal": "把好人杀到人数不超过狼人，全程伪装成好人",
+    "personality": "冷静、擅长带节奏、喜欢倒打一耙",
+    "model": "deepseek-chat"
+   },
+   {
+    "key": "seer",
+    "name": "预言家",
+    "camp": "good",
+    "count": 1,
+    "isAi": true,
+    "identity": "预言家，每晚可以查验一个人的阵营",
+    "goal": "在自己被杀之前把查验结果传出去，带好人找出所有狼",
+    "personality": "有点急，藏不住话，但这种急反而让好人信他",
+    "model": "qwen-plus"
+   },
+   {
+    "key": "witch",
+    "name": "女巫",
+    "camp": "good",
+    "count": 1,
+    "isAi": true,
+    "identity": "女巫，有一瓶解药一瓶毒药，各一次",
+    "goal": "把药用在该用的人身上，别浪费也别误伤",
+    "personality": "谨慎、犹豫、想很多但不怎么表现出来",
+    "model": "gemini-flash"
+   },
+   {
+    "key": "hunter",
+    "name": "猎人",
+    "camp": "good",
+    "count": 1,
+    "isAi": true,
+    "identity": "猎人，出局时可以开枪带走一个人",
+    "goal": "活着威慑狼人，死了也要带走一个",
+    "personality": "莽、直、护短，看谁不顺眼就盯着投",
+    "model": "deepseek-chat"
+   },
+   {
+    "key": "villager",
+    "name": "村民",
+    "camp": "good",
+    "count": 3,
+    "isAi": true,
+    "identity": "普通村民，没有任何技能",
+    "goal": "靠逻辑找出狼人，别跟票跟错",
+    "personality": "普通、爱分析、容易被带节奏但也可能突然清醒",
+    "model": "gpt-4o-mini"
+   }
+  ],
+  "uiSchema": {
+   "theme": "dark",
+   "accent": "#9b8cff",
+   "bubbleStyle": "chat",
+   "showSeats": true,
+   "systemMessageStyle": "center",
+   "actions": [
+    {
+     "key": "speak",
+     "label": "发言",
+     "kind": "text",
+     "placeholder": "说点什么，AI 都会听到",
+     "when": {
+      "phase": [
+       "speak",
+       "day"
+      ]
+     }
+    },
+    {
+     "key": "vote",
+     "label": "投票",
+     "kind": "pick_player",
+     "when": {
+      "phase": [
+       "vote"
+      ]
+     }
+    },
+    {
+     "key": "kill",
+     "label": "刀人",
+     "kind": "pick_player",
+     "when": {
+      "phase": [
+       "night"
+      ],
+      "onlyRole": [
+       "wolf"
+      ]
+     }
+    },
+    {
+     "key": "investigate",
+     "label": "查验",
+     "kind": "pick_player",
+     "when": {
+      "phase": [
+       "night"
+      ],
+      "onlyRole": [
+       "seer"
+      ]
+     }
+    },
+    {
+     "key": "save",
+     "label": "用解药",
+     "kind": "instant",
+     "when": {
+      "phase": [
+       "night"
+      ],
+      "onlyRole": [
+       "witch"
+      ]
+     }
+    },
+    {
+     "key": "poison",
+     "label": "用毒药",
+     "kind": "pick_player",
+     "when": {
+      "phase": [
+       "night"
+      ],
+      "onlyRole": [
+       "witch"
+      ]
+     }
+    }
+   ]
+  }
+ }
+]

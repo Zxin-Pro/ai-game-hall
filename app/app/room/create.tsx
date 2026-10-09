@@ -2,7 +2,7 @@ import { View, Text, ScrollView, Pressable, TextInput, ActivityIndicator, Alert,
 import { useCallback, useEffect, useState } from 'react';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { api } from '../../src/lib/api';
+import { api, OfflineError } from '../../src/lib/api';
 import { haptic, seatColor } from '../../src/lib/ui';
 import type { GameDetail } from '../../src/types';
 
@@ -63,6 +63,12 @@ export default function CreateRoom() {
       router.replace(`/room/${res.roomId}`);
     } catch (e) {
       setCreating(false);
+      // 后端连不上（或者没起）→ 直接进这个游戏的演示房
+      if (e instanceof OfflineError) {
+        haptic.warn();
+        router.replace(`/room/demo-${game.id}?demo=${game.id}`);
+        return;
+      }
       Alert.alert('创建失败', e instanceof Error ? e.message : '稍后再试');
     }
   };

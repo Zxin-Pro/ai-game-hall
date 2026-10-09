@@ -120,12 +120,20 @@ export default function GameDetailScreen() {
       </ScrollView>
 
       <View className="absolute left-0 right-0 bottom-0 px-4 pb-6 pt-3 bg-ink-950/95 border-t border-white/5">
-        <Pressable
-          onPress={() => { haptic.medium(); router.push({ pathname: '/room/create', params: { gameId: game.id } }); }}
-          className="bg-lamp rounded-2xl py-3.5 items-center"
-        >
-          <Text className="text-ink-950 font-bold text-[15px]">创建房间</Text>
-        </Pressable>
+        <View className="flex-row">
+          <Pressable
+            onPress={() => { haptic.light(); router.push(`/room/demo-${game.id}?demo=${game.id}`); }}
+            className="bg-ink-800 border border-lamp/30 rounded-2xl py-3.5 px-5 items-center mr-2"
+          >
+            <Text className="text-lamp-soft font-semibold text-[14px]">看演示</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => { haptic.medium(); router.push({ pathname: '/room/create', params: { gameId: game.id } }); }}
+            className="flex-1 bg-lamp rounded-2xl py-3.5 items-center"
+          >
+            <Text className="text-ink-950 font-bold text-[15px]">创建房间</Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );

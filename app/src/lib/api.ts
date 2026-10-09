@@ -1,5 +1,8 @@
 import Constants from 'expo-constants';
 import * as SecureStore from 'expo-secure-store';
+import { useNet } from '../store/net';
+import { demoCards, demoGame } from '../data/demo';
+import type { GameCard, GameDetail } from '../types';
 
 /* ------------------------------------------------------------------ */
 /* api：统一请求层                                                       */
@@ -80,10 +83,17 @@ export async function request<T>(path: string, opts: ReqOpts = {}): Promise<T> {
     });
   };
 
-  let res = await doFetch();
-  if (res.status === 401 && !opts.noAuth) {
-    const ok = await refreshOnce();
-    if (ok) res = await doFetch();
+  let res: Response;
+  try {
+    res = await doFetch();
+    if (res.status === 401 && !opts.noAuth) {
+      const ok = await refreshOnce();
+      if (ok) res = await doFetch();
+    }
+  } catch (e) {
+    // 连不上服务器（不是 4xx/5xx，是根本连不上）
+    netDown(e instanceof Error ? e.message : '网络不可达');
+    throw new OfflineError(e instanceof Error ? e.message : '网络不可达');
   }
 
   const text = await res.text();
@@ -93,7 +103,21 @@ export async function request<T>(path: string, opts: ReqOpts = {}): Promise<T> {
     const msg = (data as { error?: string } | null)?.error ?? `请求失败 ${res.status}`;
     throw new ApiError(msg, res.status);
   }
+  netUp();
   return data as T;
+}
+
+/** 服务器可达但没有登录态之类的情况，不算离线 */
+export class OfflineError extends Error {
+  constructor(message: string) { super(message); }
+}
+
+function netUp() {
+  useNet.getState().setOnline();
+}
+
+function netDown(reason: string) {
+  useNet.getState().setOffline(reason);
 }
 
 function safeJson(text: string): unknown {
@@ -116,11 +140,38 @@ export const api = {
   logout: (refresh: string | null) =>
     request<{ ok: boolean }>('/api/auth/logout', { method: 'POST', body: { refresh } }),
 
-  games: () => request<{ games: import('../types').GameCard[] }>('/api/games'),
+  games: async () => {
+    try {
+      return await request<{ games: GameCard[] }>('/api/games');
+    } catch (e) {
+      if (e instanceof OfflineError) {
+        return { games: demoCards(), offline: true } as { games: GameCard[] };
+      }
+      throw e;
+    }
+  },
 
-  game: (id: string) => request<import('../types').GameDetail>(`/api/games/${id}`),
+  game: async (id: string) => {
+    try {
+      return await request<GameDetail>(`/api/games/${id}`);
+    } catch (e) {
+      if (e instanceof OfflineError) {
+        const g = demoGame(id);
+        if (!g) throw e;
+        return g as unknown as GameDetail;
+      }
+      throw e;
+    }
+  },
 
-  stats: () => request<{ rooms: string; running: string; messages: string; users: string }>('/api/stats'),
+  stats: async () => {
+    try {
+      return await request<{ rooms: string; running: string; messages: string; users: string }>('/api/stats');
+    } catch (e) {
+      if (e instanceof OfflineError) return { rooms: '0', running: '0', messages: '0', users: '0' };
+      throw e;
+    }
+  },
 
   createRoom: (body: {
     gameId: string;

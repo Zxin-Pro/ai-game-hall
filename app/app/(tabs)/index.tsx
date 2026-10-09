@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../src/lib/api';
 import { haptic } from '../../src/lib/ui';
+import { useNet } from '../../src/store/net';
 import type { GameCard } from '../../src/types';
 
 const ENGINE_LABEL: Record<string, string> = {
@@ -22,8 +23,14 @@ const ENGINE_COLOR: Record<string, string> = {
   simulation: '#5ee0a8',
 };
 
+const EMOJI: Record<string, string> = {
+  werewolf: '🐺', undercover: '🕵️', dating: '💗', 'turtle-soup': '🐢',
+  court: '⚖️', negotiation: '🤝', startup: '🚀',
+};
+
 export default function GameHall() {
   const insets = useSafeAreaInsets();
+  const offline = useNet((s) => s.offline);
   const [games, setGames] = useState<GameCard[]>([]);
   const [stats, setStats] = useState<{ rooms: string; messages: string } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,9 +58,20 @@ export default function GameHall() {
       <View className="px-5 pt-3 pb-4">
         <Text className="text-white text-[26px] font-bold">游戏厅</Text>
         <Text className="text-white/35 text-[12px] mt-1">
-          {stats ? `已经开了 ${stats.rooms} 局 · ${stats.messages} 条发言` : '一群 AI 围一桌，你负责看戏'}
+          {offline
+            ? '一群 AI 围一桌，你负责看戏'
+            : stats ? `已经开了 ${stats.rooms} 局 · ${stats.messages} 条发言` : '一群 AI 围一桌，你负责看戏'}
         </Text>
       </View>
+
+      {offline && (
+        <View className="mx-4 mb-3 bg-warm/10 border border-warm/30 rounded-2xl px-4 py-3">
+          <Text className="text-warm text-[12px] font-semibold">离线演示模式</Text>
+          <Text className="text-white/45 text-[11px] mt-1 leading-4">
+            没连上后端，下面是内置的七个游戏。可以看玩法、角色和规则；进房间会播放一段演示对局。
+          </Text>
+        </View>
+      )}
 
       {loading ? (
         <View className="flex-1 items-center justify-center"><ActivityIndicator color="#9b8cff" /></View>
@@ -91,14 +109,7 @@ export default function GameHall() {
                     className="w-12 h-12 rounded-2xl items-center justify-center"
                     style={{ backgroundColor: `${color}22` }}
                   >
-                    <Text style={{ color, fontSize: 20 }}>
-                      {g.name.includes('狼') ? '🐺'
-                        : g.name.includes('卧底') ? '🕵️'
-                          : g.name.includes('恋爱') ? '💗'
-                            : g.name.includes('海龟') ? '🐢'
-                              : g.name.includes('法庭') ? '⚖️'
-                                : g.name.includes('谈判') ? '🤝' : '🚀'}
-                    </Text>
+                    <Text style={{ fontSize: 22 }}>{EMOJI[g.id] ?? '🎮'}</Text>
                   </View>
 
                   <View className="flex-1 ml-3">
@@ -142,6 +153,10 @@ export default function GameHall() {
               <Text className="text-white/20 text-[11px] mt-2">后端跑一次 npm run seed:games 就有了</Text>
             </View>
           )}
+
+          <Text className="text-white/15 text-[10px] text-center mt-6 leading-4">
+            完全免费 · 无广告 · 无内购 · 不限局数{'\n'}所有 AI 发言由模型生成，内容分级 12+
+          </Text>
         </ScrollView>
       )}
     </View>
