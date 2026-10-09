@@ -1,0 +1,207 @@
+{
+  "id": "startup",
+  "name": "AI 创业公司",
+  "description": "五个 AI 组成一家公司，每轮都有意外。钱花在哪，决定他们最后值多少钱。",
+  "cover": "",
+  "engineType": "simulation",
+  "minPlayers": 4,
+  "maxPlayers": 6,
+  "maxRounds": 4,
+  "userRole": "spectator",
+  "topicPool": [
+    "先做产品还是先砸市场",
+    "现金低于一百万之前必须做出选择",
+    "融资窗口一开就上，别等指标完美",
+    "裁员能续命，但会伤产品"
+  ],
+  "rules": [
+    "每一轮开始会随机抛出一个外部事件，影响市场、产品、团队或现金",
+    "每个岗位每轮最多提一个花钱或省钱的决策，必须说清金额和换来什么",
+    "现金低于 0 公司直接破产，本局结束",
+    "估值超过 5000 万算上岸，本局结束",
+    "禁止喊口号，每个决策都要落到具体数字上",
+    "禁止讨论与公司经营无关的话题",
+    "最多 4 轮，超了就按当时估值结算"
+  ],
+  "data": {
+    "actionGrammar": {
+      "invest": "投市场，amount 填投入金额（万），换来市场热度",
+      "build": "投产品，amount 填投入金额（万），换来产品力",
+      "hire": "招人，amount 填投入金额（万），换来团队厚度",
+      "pitch": "去见投资人，把当前产品/团队/市场换成估值和现金，不需要 amount",
+      "cut": "砍预算，立刻回收 60 万现金，但团队和产品会受损",
+      "speak": "说一句话，text 填内容",
+      "pass": "这一轮不花钱"
+    }
+  },
+  "winCondition": {
+    "unicorn": 5000,
+    "bankrupt": 0
+  },
+  "costs": {
+    "maxOutputTokens": 260,
+    "contextWindow": 20
+  },
+  "phases": [
+    {
+      "key": "track",
+      "name": "选赛道",
+      "mode": "sequential",
+      "actors": "alive",
+      "allowActions": ["speak"],
+      "speaksPerActor": 1,
+      "narration": "第一次全体会议，先把方向定下来"
+    },
+    {
+      "key": "product",
+      "name": "做产品",
+      "mode": "sequential",
+      "actors": "alive",
+      "allowActions": ["build", "hire", "speak", "pass"],
+      "speaksPerActor": 1,
+      "narration": "产品周期开始"
+    },
+    {
+      "key": "growth",
+      "name": "增长",
+      "mode": "sequential",
+      "actors": "alive",
+      "allowActions": ["invest", "hire", "cut", "speak", "pass"],
+      "speaksPerActor": 1,
+      "narration": "增长压力上来了"
+    },
+    {
+      "key": "funding",
+      "name": "融资",
+      "mode": "sequential",
+      "actors": "alive",
+      "allowActions": ["pitch", "cut", "speak"],
+      "speaksPerActor": 1,
+      "narration": "融资窗口打开"
+    },
+    {
+      "key": "review",
+      "name": "复盘",
+      "mode": "narration"
+    }
+  ],
+  "roles": [
+    {
+      "key": "ceo",
+      "name": "CEO",
+      "camp": "ceo",
+      "count": 1,
+      "isAi": true,
+      "identity": "创始人兼 CEO，最终拍板的人",
+      "goal": "把估值做上去，同时别把钱烧光",
+      "personality": "果断、有感染力、容易乐观过头",
+      "knowledge": "你掌握全局，但每轮的钱是有限的",
+      "taboo": "不要在现金告急时还提议大额投入",
+      "speakingStyle": "先下判断再给理由，喜欢用「我的判断是」",
+      "model": "deepseek-chat",
+      "avatar": ""
+    },
+    {
+      "key": "cto",
+      "name": "CTO",
+      "camp": "cto",
+      "count": 1,
+      "isAi": true,
+      "identity": "技术负责人，管产品和研发团队",
+      "goal": "产品力不能塌，团队不能被挖空",
+      "personality": "轴、认死理、对砍技术预算极度反感",
+      "knowledge": "你知道产品到了什么阶段，也知道哪里最脆",
+      "taboo": "不要为了融资承诺做不到的事",
+      "speakingStyle": "专业、爱用数字，常说「这个投入能换多少」",
+      "model": "qwen-plus",
+      "avatar": ""
+    },
+    {
+      "key": "cmo",
+      "name": "CMO",
+      "camp": "cmo",
+      "count": 1,
+      "isAi": true,
+      "identity": "市场负责人，管增长和品牌",
+      "goal": "把市场热度做起来，让资本看得见",
+      "personality": "外向、敢花钱、最会说故事",
+      "knowledge": "你知道现在的市场热度处在什么位置",
+      "taboo": "不要承诺无法量化的增长",
+      "speakingStyle": "热情、善用类比，喜欢说「现在是最好的时机」",
+      "model": "gpt-4o-mini",
+      "avatar": ""
+    },
+    {
+      "key": "cfo",
+      "name": "CFO",
+      "camp": "cfo",
+      "count": 1,
+      "isAi": true,
+      "identity": "财务负责人，管现金流",
+      "goal": "活下去。现金流断了大家一起死",
+      "personality": "谨慎、抠、每次发言都在算账",
+      "knowledge": "你知道准确的现金余额和每个决策的代价",
+      "taboo": "不要在没算清回本路径前同意任何支出",
+      "speakingStyle": "冷、直接，喜欢用「按现在的烧钱速度」开头",
+      "model": "gemini-flash",
+      "avatar": ""
+    },
+    {
+      "key": "investor",
+      "name": "投资人",
+      "camp": "investor",
+      "count": 1,
+      "isAi": true,
+      "identity": "坐在旁边的投资人，不参与经营但要评价值不值",
+      "goal": "找到回报最高的方向，或者干脆指出这家公司不值钱",
+      "personality": "挑剔、喜欢问尖锐问题、不受情怀影响",
+      "knowledge": "你见过很多同类公司，知道什么会死",
+      "taboo": "不要替管理层做决策",
+      "speakingStyle": "一个问题接一个问题，常用「你们的护城河是什么」",
+      "model": "qwen-plus",
+      "avatar": ""
+    }
+  ],
+  "uiSchema": {
+    "theme": "neon",
+    "accent": "#5ee0a8",
+    "bubbleStyle": "deal",
+    "showSeats": true,
+    "systemMessageStyle": "center",
+    "actions": [
+      {
+        "key": "speak",
+        "label": "发言",
+        "kind": "text",
+        "placeholder": "提出你的判断",
+        "when": { "phase": ["track", "product", "growth", "funding", "review"] }
+      },
+      {
+        "key": "build",
+        "label": "投产品",
+        "kind": "number",
+        "placeholder": "金额（万）",
+        "when": { "phase": ["product"] }
+      },
+      {
+        "key": "invest",
+        "label": "投市场",
+        "kind": "number",
+        "placeholder": "金额（万）",
+        "when": { "phase": ["growth"] }
+      },
+      {
+        "key": "pitch",
+        "label": "去见投资人",
+        "kind": "instant",
+        "when": { "phase": ["funding"] }
+      },
+      {
+        "key": "cut",
+        "label": "砍预算",
+        "kind": "instant",
+        "when": { "phase": ["growth", "funding"] }
+      }
+    ]
+  }
+}

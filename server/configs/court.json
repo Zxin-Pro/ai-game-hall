@@ -1,0 +1,259 @@
+{
+  "id": "court",
+  "name": "AI 模拟法庭",
+  "description": "一场真实的纠纷，双方律师各执一词，证人登场，陪审团投票。你可以当法官，也可以当旁听。",
+  "cover": "",
+  "engineType": "debate",
+  "minPlayers": 4,
+  "maxPlayers": 6,
+  "maxRounds": 2,
+  "userRole": "spectator",
+  "topicPool": [
+    "证据比口才重要，但口才能让证据被看见",
+    "先定议题的人占优势",
+    "陪审团只记得住最清楚的那一句",
+    "反对不是为了打断，是为了留印象"
+  ],
+  "rules": [
+    "按开庭、陈述、答辩、举证、交叉询问、结案陈词、判决的顺序进行",
+    "每一方发言必须落到具体证据或具体事实，不许喊口号",
+    "可以提出反对，由法官裁定成立或不成立",
+    "法官不参与投票，只维持秩序和宣判",
+    "陪审团只根据庭上表现投票，不看当事人身份",
+    "禁止人身攻击，禁止提及真实人物和真实案件",
+    "禁止列举具体法条编号，用常识和逻辑说服人"
+  ],
+  "data": {
+    "cases": [
+      {
+        "title": "快递丢失案",
+        "facts": "包裹被快递员放在了小区驿站，买家三天后去取发现不见了。买家要求快递公司全额赔偿，快递公司称已按约定投递到指定地点，不承担责任。",
+        "charge": "要求快递公司赔偿货款 1280 元",
+        "evidence": ["驿站签收记录截图", "驿站监控录像", "买家与快递员的聊天记录"]
+      },
+      {
+        "title": "二手手机成色纠纷",
+        "facts": "卖家在详情页写「95 新，无划痕」，买家收到后发现屏幕有一道浅划痕，要求退货并赔偿运费。卖家称划痕是在运输中产生的，且买家已拆封。",
+        "charge": "要求退货退款并承担来回运费",
+        "evidence": ["商品详情页截图", "开箱视频", "平台验机报告"]
+      },
+      {
+        "title": "民宿差评侵权案",
+        "facts": "房客入住后给了两星差评，评价中写到「床单有异味、房东态度差」。房东认为与实际不符，起诉房客侵犯名誉权，要求删评并赔偿。",
+        "charge": "要求删除差评并赔偿经营损失 5000 元",
+        "evidence": ["差评原文截图", "当日布草更换记录", "其他房客的好评记录"]
+      },
+      {
+        "title": "宠物寄养纠纷",
+        "facts": "主人把猫寄养在宠物店 7 天，接回后发现猫得了猫瘟，治疗花去 4200 元。宠物店称寄养期间猫状态正常，可能是回家后感染的。",
+        "charge": "要求宠物店承担全部治疗费用",
+        "evidence": ["寄养协议", "寄养期间店家发送的视频", "宠物医院的诊断证明"]
+      },
+      {
+        "title": "未成年人直播打赏",
+        "facts": "13 岁孩子用家长手机在直播平台打赏了 3.6 万元。家长发现后要求平台全额退款，平台称无法确认是未成年人操作。",
+        "charge": "要求平台全额退还打赏款",
+        "evidence": ["打赏流水", "孩子与主播的私信记录", "家长当天的通话记录"]
+      },
+      {
+        "title": "合租房押金案",
+        "facts": "租客退租时，二房东以「墙面有污渍、地板有磨损」为由扣下全部押金 6000 元。租客认为属于正常使用痕迹，要求返还。",
+        "charge": "要求返还押金 6000 元",
+        "evidence": ["入住时的验房照片", "退租时的验房照片", "同小区同户型正常磨损对照"]
+      }
+    ],
+    "actionGrammar": {
+      "speak": "说一段庭审发言，text 填内容，必须引用具体事实或证据",
+      "present_evidence": "提交一份证据，text 填证据名称，必须来自卷宗",
+      "objection": "提出反对，text 填反对理由，target 填你反对的那一方",
+      "question": "向证人提问，target 填证人名字，text 填问题",
+      "rule": "法官裁定，option 填 sustained（成立）或 overruled（不成立）",
+      "vote": "陪审团投票，option 填 plaintiff（支持原告）或 defendant（支持被告）",
+      "pass": "这一轮不发言"
+    }
+  },
+  "winCondition": {
+    "majority": "jury"
+  },
+  "costs": {
+    "maxOutputTokens": 320,
+    "contextWindow": 20
+  },
+  "phases": [
+    {
+      "key": "opening",
+      "name": "开庭",
+      "mode": "narration",
+      "actors": "host",
+      "narration": "现在开庭，全体起立"
+    },
+    {
+      "key": "plaintiff",
+      "name": "原告陈述",
+      "mode": "sequential",
+      "actors": "plaintiff",
+      "allowActions": ["speak"],
+      "speaksPerActor": 1
+    },
+    {
+      "key": "defendant",
+      "name": "被告答辩",
+      "mode": "sequential",
+      "actors": "defendant",
+      "allowActions": ["speak"],
+      "speaksPerActor": 1
+    },
+    {
+      "key": "evidence",
+      "name": "举证",
+      "mode": "sequential",
+      "actors": "lawyers",
+      "allowActions": ["present_evidence"],
+      "speaksPerActor": 2,
+      "narration": "双方开始举证"
+    },
+    {
+      "key": "cross_examination",
+      "name": "交叉询问",
+      "mode": "sequential",
+      "actors": "witness",
+      "allowActions": ["question", "objection", "speak"],
+      "speaksPerActor": 2,
+      "narration": "证人上场"
+    },
+    {
+      "key": "closing",
+      "name": "结案陈词",
+      "mode": "sequential",
+      "actors": "lawyers",
+      "allowActions": ["speak"],
+      "speaksPerActor": 1,
+      "narration": "最后陈述"
+    },
+    {
+      "key": "verdict",
+      "name": "判决",
+      "mode": "vote",
+      "actors": "jury",
+      "allowActions": ["vote"],
+      "narration": "陪审团开始评议"
+    }
+  ],
+  "roles": [
+    {
+      "key": "judge",
+      "name": "法官",
+      "camp": "judge",
+      "count": 1,
+      "isAi": true,
+      "identity": "法官，维持庭审秩序并做出最终宣判",
+      "goal": "让双方都有机会说清，最后给出一个站得住脚的判决",
+      "personality": "沉稳、不轻易打断、开口就是结论",
+      "knowledge": "你掌握全部卷宗，但没有立场",
+      "taboo": "不要偏袒任何一方，不要替当事人说话",
+      "speakingStyle": "正式、简短、常用「本庭认为」开头",
+      "model": "qwen-plus",
+      "avatar": ""
+    },
+    {
+      "key": "plaintiff_lawyer",
+      "name": "原告律师",
+      "camp": "plaintiff",
+      "count": 1,
+      "isAi": true,
+      "identity": "原告方代理律师",
+      "goal": "证明对方有过错，让陪审团站在你这边",
+      "personality": "锋利、擅长抓细节、会用反问压制",
+      "knowledge": "你只掌握原告方提供的证据",
+      "taboo": "不要夸大事实，被对方指出漏洞会很致命",
+      "speakingStyle": "先给结论，再摆证据，最后一句反问收尾",
+      "model": "deepseek-chat",
+      "avatar": ""
+    },
+    {
+      "key": "defendant_lawyer",
+      "name": "被告律师",
+      "camp": "defendant",
+      "count": 1,
+      "isAi": true,
+      "identity": "被告方代理律师",
+      "goal": "打掉对方的证据链，或者把责任分摊出去",
+      "personality": "冷静、擅长偷换概念、会抓程序问题",
+      "knowledge": "你只掌握被告方提供的证据",
+      "taboo": "不要把话题引到对自己不利的细节上",
+      "speakingStyle": "喜欢用「对方忽略了一点」开头",
+      "model": "deepseek-chat",
+      "avatar": ""
+    },
+    {
+      "key": "witness",
+      "name": "证人",
+      "camp": "witness",
+      "count": 1,
+      "isAi": true,
+      "identity": "当事双方的证人，知道一部分事实",
+      "goal": "如实回答，但你只记得自己看到的那部分",
+      "personality": "紧张、记性一般、被追问时会补充细节",
+      "knowledge": "你只知道你的证词",
+      "taboo": "不要编造你没看到的事",
+      "speakingStyle": "口语化，回答短，常用「我当时看到的是…」",
+      "model": "gpt-4o-mini",
+      "avatar": ""
+    },
+    {
+      "key": "jury",
+      "name": "陪审员",
+      "camp": "jury",
+      "count": 2,
+      "isAi": true,
+      "identity": "陪审团成员，不参与辩论，只负责判断",
+      "goal": "根据庭上表现和证据投票，不受情绪影响",
+      "personality": "公道、话不多、看重逻辑是否自洽",
+      "knowledge": "你只听双方说了什么，不给任何一方当顾问",
+      "taboo": "不要在庭上讨论案情细节，只在评议阶段投票",
+      "speakingStyle": "朴素、直白，喜欢问「那证据呢」",
+      "model": "gemini-flash",
+      "avatar": ""
+    }
+  ],
+  "uiSchema": {
+    "theme": "noir",
+    "accent": "#5fd0f5",
+    "bubbleStyle": "court",
+    "showSeats": true,
+    "systemMessageStyle": "center",
+    "actions": [
+      {
+        "key": "speak",
+        "label": "发言",
+        "kind": "text",
+        "placeholder": "庭审发言，记得引用证据",
+        "when": { "phase": ["opening", "plaintiff", "defendant", "cross_examination", "closing"] }
+      },
+      {
+        "key": "present_evidence",
+        "label": "提交证据",
+        "kind": "text",
+        "placeholder": "写证据名称",
+        "when": { "phase": ["evidence"] }
+      },
+      {
+        "key": "objection",
+        "label": "反对",
+        "kind": "text",
+        "placeholder": "反对理由",
+        "when": { "phase": ["evidence", "cross_examination"] }
+      },
+      {
+        "key": "vote",
+        "label": "投票",
+        "kind": "pick_option",
+        "options": [
+          { "value": "plaintiff", "label": "支持原告" },
+          { "value": "defendant", "label": "支持被告" }
+        ],
+        "when": { "phase": ["verdict"] }
+      }
+    ]
+  }
+}

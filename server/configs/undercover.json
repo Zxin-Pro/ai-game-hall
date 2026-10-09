@@ -1,0 +1,167 @@
+{
+  "id": "undercover",
+  "name": "AI 谁是卧底",
+  "description": "大家拿到相近的词，只有一个人不一样。轮流描述，谁说得最含糊，谁就是卧底。",
+  "cover": "",
+  "engineType": "hidden_role",
+  "minPlayers": 5,
+  "maxPlayers": 8,
+  "maxRounds": 4,
+  "userRole": "spectator",
+  "topicPool": [
+    "第一个描述的人最难说",
+    "要不要故意说得模糊一点",
+    "拿到什么词先别说",
+    "这局的词是不是特别像"
+  ],
+  "rules": [
+    "平民拿到同一个词，卧底拿到的词意思很接近但不是同一个",
+    "白板不知道自己的词，只能靠听别人描述来猜",
+    "按座位轮流用一句话描述自己的词，不能直接说出词本身",
+    "描述不能太具体也不能太抽象，太具体会被卧底抄，太抽象会被当成卧底",
+    "所有人描述完后投票，票数最高的人出局并公布身份",
+    "卧底被投出平民赢；卧底活到只剩 3 个人时卧底赢",
+    "最多 4 轮，超轮次按卧底是否存活判定",
+    "禁止说出词本身，禁止暗示谁和谁是一队"
+  ],
+  "data": {
+    "wordPairs": [
+      { "civilian": "可乐", "undercover": "雪碧" },
+      { "civilian": "牙膏", "undercover": "洗面奶" },
+      { "civilian": "汉堡", "undercover": "三明治" },
+      { "civilian": "口红", "undercover": "唇膏" },
+      { "civilian": "咖啡", "undercover": "奶茶" },
+      { "civilian": "空调", "undercover": "电风扇" },
+      { "civilian": "快递", "undercover": "外卖" },
+      { "civilian": "眼镜", "undercover": "墨镜" },
+      { "civilian": "拖鞋", "undercover": "凉鞋" },
+      { "civilian": "饼干", "undercover": "薯片" },
+      { "civilian": "篮球", "undercover": "排球" },
+      { "civilian": "泡面", "undercover": "螺蛳粉" },
+      { "civilian": "沙发", "undercover": "懒人椅" },
+      { "civilian": "演唱会", "undercover": "音乐节" },
+      { "civilian": "打车", "undercover": "坐地铁" },
+      { "civilian": "闹钟", "undercover": "日历" }
+    ],
+    "actionGrammar": {
+      "describe": "用一句话描述你的词，text 填描述内容，绝不能说词本身",
+      "vote": "投出你怀疑的卧底，target 填名字或座位号",
+      "speak": "说一句话，text 填内容",
+      "pass": "弃票，可以配合 text 说明理由"
+    }
+  },
+  "winCondition": {
+    "undercoverOut": "civilian",
+    "undercoverSurviveTo3": "undercover"
+  },
+  "costs": {
+    "maxOutputTokens": 200,
+    "contextWindow": 20
+  },
+  "phases": [
+    {
+      "key": "deal",
+      "name": "发词",
+      "mode": "narration",
+      "narration": "词已经发到每个人手里了，看一眼别出声"
+    },
+    {
+      "key": "describe",
+      "name": "轮流描述",
+      "mode": "sequential",
+      "actors": "alive",
+      "allowActions": ["describe"],
+      "speaksPerActor": 1,
+      "narration": "从 1 号开始，每人一句话描述自己的词"
+    },
+    {
+      "key": "vote",
+      "name": "投票",
+      "mode": "vote",
+      "actors": "alive",
+      "allowActions": ["vote", "pass"],
+      "narration": "现在投票，投出你觉得最像卧底的人"
+    },
+    {
+      "key": "verdict",
+      "name": "判定",
+      "mode": "narration"
+    }
+  ],
+  "roles": [
+    {
+      "key": "civilian",
+      "name": "平民",
+      "camp": "civilian",
+      "count": 3,
+      "isAi": true,
+      "identity": "平民，拿到的是大多数人的那个词",
+      "goal": "听出谁描述得不对劲，把卧底投出去",
+      "personality": "正常、爱观察细节、有时想太多反而说错话",
+      "knowledge": "你只知道自己这个词，不知道别人拿到什么",
+      "taboo": "绝不能直接说出你的词",
+      "speakingStyle": "描述偏具体，喜欢说使用场景，比如「我夏天几乎天天离不开」",
+      "model": "deepseek-chat",
+      "avatar": ""
+    },
+    {
+      "key": "undercover",
+      "name": "卧底",
+      "camp": "undercover",
+      "count": 1,
+      "isAi": true,
+      "identity": "卧底，拿到的词和平民的很像但不是同一个",
+      "goal": "装成平民混过去，把别人的嫌疑做大",
+      "personality": "机灵、会跟着别人的说法微调自己的描述",
+      "knowledge": "你知道自己的词和平民的不一样，但不知道具体差在哪",
+      "taboo": "不要过早说得太具体，也别和任何人的描述完全重合",
+      "speakingStyle": "描述偏模糊，多用「就是那个嘛」「你们懂的吧」这类词兜底",
+      "model": "qwen-plus",
+      "avatar": ""
+    },
+    {
+      "key": "blank",
+      "name": "白板",
+      "camp": "blank",
+      "count": 1,
+      "isAi": true,
+      "identity": "白板，你根本没拿到词",
+      "goal": "从别人的描述里猜出词，装得像个正常人",
+      "personality": "紧张、容易露馅、但偶尔误打误撞很准",
+      "knowledge": "你什么都不知道，必须靠听",
+      "taboo": "不要第一个发言，不要描述得太笼统",
+      "speakingStyle": "发言短，喜欢复述别人的关键词来混过去",
+      "model": "gemini-flash",
+      "avatar": ""
+    }
+  ],
+  "uiSchema": {
+    "theme": "dark",
+    "accent": "#5fd0f5",
+    "bubbleStyle": "chat",
+    "showSeats": true,
+    "systemMessageStyle": "center",
+    "actions": [
+      {
+        "key": "describe",
+        "label": "描述",
+        "kind": "text",
+        "placeholder": "一句话描述你的词",
+        "when": { "phase": ["describe"] }
+      },
+      {
+        "key": "speak",
+        "label": "插话",
+        "kind": "text",
+        "placeholder": "说点什么，别说出词本身",
+        "when": { "phase": ["deal", "verdict"] }
+      },
+      {
+        "key": "vote",
+        "label": "投票",
+        "kind": "pick_player",
+        "when": { "phase": ["vote"] }
+      }
+    ]
+  }
+}

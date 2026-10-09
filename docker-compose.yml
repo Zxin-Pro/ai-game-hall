@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gameroom
+      POSTGRES_PASSWORD: gameroom
+      POSTGRES_DB: gameroom
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gameroom"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    ports:
+      - "127.0.0.1:6379:6379"
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - ./server/.env
+    environment:
+      DATABASE_URL: postgres://gameroom:gameroom@postgres:5432/gameroom
+      REDIS_URL: redis://redis:6379
+      HOST: 0.0.0.0
+      PORT: 8787
+      UPLOAD_DIR: /app/data/uploads
+    ports:
+      - "8787:8787"
+    volumes:
+      - uploads:/app/data/uploads
+
+volumes:
+  pgdata:
+  redisdata:
+  uploads:

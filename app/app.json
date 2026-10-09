@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "AI 游戏厅",
+    "slug": "ai-game-hall",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "aigamehall",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": false,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0d0b14"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.zxin.aigamehall",
+      "infoPlist": {
+        "NSUserTrackingUsageDescription": "不会追踪你，这句话只是为了过审"
+      }
+    },
+    "android": {
+      "package": "com.zxin.aigamehall",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0d0b14"
+      },
+      "permissions": ["VIBRATE", "POST_NOTIFICATIONS"],
+      "softwareKeyboardLayoutMode": "resize"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#9b8cff"
+        }
+      ]
+    ],
+    "extra": {
+      "router": { "origin": false },
+      "apiBaseUrl": "http://10.0.2.2:8787"
+    },
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

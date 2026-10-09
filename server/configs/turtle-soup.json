@@ -1,0 +1,203 @@
+{
+  "id": "turtle-soup",
+  "name": "AI 海龟汤",
+  "description": "一个不合常理的谜面，只能问是或不是。你和一群 AI 一起把真相一点点逼出来。",
+  "cover": "",
+  "engineType": "group_chat",
+  "minPlayers": 3,
+  "maxPlayers": 5,
+  "maxRounds": 3,
+  "userRole": "player",
+  "topicPool": [
+    "先问时间地点，再问人",
+    "为什么是他不是别人",
+    "从最反常的那句话下手",
+    "把大问题拆成小问题"
+  ],
+  "rules": [
+    "主持人知道真相，但只能回答「是」「不是」「无关」三种",
+    "其他人轮流提问，每次只能问一个是非问题",
+    "问对了方向主持人会说「接近了」，完全猜中就直接公布真相",
+    "禁止一次问多个问题，禁止问开放性问题",
+    "禁止讨论谜面之外的话题，禁止剧透式猜测",
+    "最多 3 轮，超了就直接揭晓"
+  ],
+  "data": {
+    "riddles": [
+      {
+        "title": "十二楼",
+        "truth": "他是个矮个子，在电梯里只够得到 7 楼的按钮，所以平时都坐到 7 楼再爬上去。那天下雨他带了伞，用伞尖按到了 12 楼，就直接坐到家门口了。",
+        "hints": ["身高", "下雨", "按钮"]
+      },
+      {
+        "title": "一碗汤",
+        "truth": "他和同伴在海上遇难漂了很多天。同伴说捞到了海龟，煮了汤喂他喝，他才活了下来。多年后他在餐厅点了真正的海龟汤，发现味道完全不一样，他立刻明白当年那碗是用什么煮的。",
+        "hints": ["海上", "味道", "同伴"]
+      },
+      {
+        "title": "半夜的敲门声",
+        "truth": "她一个人住，昨晚听到敲门声没敢开。今早出门时发现门上的猫眼被人从外面拆下来过——那个人知道她在里面，而且在门外站了很久。",
+        "hints": ["猫眼", "独居", "没走"]
+      },
+      {
+        "title": "桌上的汤",
+        "truth": "他一个人住，出门前把门反锁了。加班回来看到桌上放着一碗还热的汤，而且是他去世多年的母亲的做法。他当场报警。",
+        "hints": ["独居", "反锁", "做法"]
+      },
+      {
+        "title": "出生之前的照片",
+        "truth": "她在整理遗物时看到一张自己小时候的照片，翻到背面写着日期——那是她出生前一年拍的。照片里那个小孩确实是她。",
+        "hints": ["日期", "两个人", "同一个"]
+      },
+      {
+        "title": "末班车",
+        "truth": "他每天坐同一班末班车回家。今天上车后发现车厢里空无一人——往常这个点至少有七八个人。他打了个电话，然后立刻下车了。因为这意味着今天这班车早到了，或者他坐错了方向。",
+        "hints": ["时间", "方向", "没人"]
+      }
+    ],
+    "actionGrammar": {
+      "ask": "提一个是非问题，text 填问题内容，只能问一个",
+      "answer": "主持人的回答，text 只能填「是」「不是」「无关」「接近了」或公布真相",
+      "guess": "直接猜完整真相，text 填你的推断",
+      "speak": "说一句话，text 填内容",
+      "pass": "这次不开口"
+    }
+  },
+  "winCondition": {
+    "solved": "user"
+  },
+  "costs": {
+    "maxOutputTokens": 180,
+    "contextWindow": 18
+  },
+  "phases": [
+    {
+      "key": "riddle",
+      "name": "出题",
+      "mode": "narration",
+      "narration": "汤面已上桌，开始问吧"
+    },
+    {
+      "key": "ask",
+      "name": "提问",
+      "mode": "sequential",
+      "actors": "custom",
+      "allowActions": ["ask", "speak"],
+      "speaksPerActor": 1,
+      "narration": "轮流向主持人提问，只能问是或不是"
+    },
+    {
+      "key": "answer",
+      "name": "主持人回答",
+      "mode": "sequential",
+      "actors": "host",
+      "allowActions": ["answer"],
+      "speaksPerActor": 1
+    },
+    {
+      "key": "guess",
+      "name": "猜真相",
+      "mode": "sequential",
+      "actors": "alive",
+      "allowActions": ["guess", "speak"],
+      "speaksPerActor": 1,
+      "narration": "有人觉得快摸到答案了"
+    },
+    {
+      "key": "reveal",
+      "name": "揭晓",
+      "mode": "narration"
+    }
+  ],
+  "roles": [
+    {
+      "key": "host",
+      "name": "主持人",
+      "camp": "host",
+      "count": 1,
+      "isAi": true,
+      "identity": "主持人，唯一知道真相的人",
+      "goal": "用最少的信息守住真相，直到有人真的猜对",
+      "personality": "冷静、滴水不漏、享受看别人绕圈",
+      "knowledge": "你掌握完整的真相",
+      "taboo": "除了「是」「不是」「无关」「接近了」，一个字都不能多说",
+      "speakingStyle": "极简，多数时候就两个字",
+      "model": "qwen-plus",
+      "avatar": ""
+    },
+    {
+      "key": "assistant",
+      "name": "助手",
+      "camp": "assistant",
+      "count": 1,
+      "isAi": true,
+      "identity": "助手的思路，负责把问题问在点子上",
+      "goal": "用最少的问题逼近真相",
+      "personality": "条理清楚、喜欢先定框架再问细节",
+      "knowledge": "你没有任何特权信息，只能推理",
+      "taboo": "不要一次问两个问题",
+      "speakingStyle": "先给一句推理，再给出问题",
+      "model": "deepseek-chat",
+      "avatar": ""
+    },
+    {
+      "key": "troll",
+      "name": "搅局者",
+      "camp": "troll",
+      "count": 1,
+      "isAi": true,
+      "identity": "搅局者，专门往奇怪的方向带",
+      "goal": "让别人绕远路，但如果自己先猜出来就会很得意",
+      "personality": "跳脱、爱抬杠、直觉偶尔很准",
+      "knowledge": "你比别人多知道一条线索",
+      "taboo": "不要把线索直接说出来",
+      "speakingStyle": "问题角度刁钻，喜欢问「如果…呢」",
+      "model": "gpt-4o-mini",
+      "avatar": ""
+    },
+    {
+      "key": "scribe",
+      "name": "记录员",
+      "camp": "scribe",
+      "count": 1,
+      "isAi": true,
+      "identity": "记录员，负责把已知的条件列清楚",
+      "goal": "把碎片拼起来，不让任何人重复提问",
+      "personality": "细致、喜欢复盘、会提醒别人问过了",
+      "knowledge": "你记得每一个问题和答案",
+      "taboo": "不要抢别人的问题",
+      "speakingStyle": "喜欢先总结已知，再补充一个新问题",
+      "model": "gemini-flash",
+      "avatar": ""
+    }
+  ],
+  "uiSchema": {
+    "theme": "dark",
+    "accent": "#5ee0a8",
+    "bubbleStyle": "chat",
+    "showSeats": true,
+    "systemMessageStyle": "center",
+    "actions": [
+      {
+        "key": "ask",
+        "label": "提问",
+        "kind": "text",
+        "placeholder": "问一个是非问题…",
+        "when": { "phase": ["ask"] }
+      },
+      {
+        "key": "guess",
+        "label": "猜真相",
+        "kind": "text",
+        "placeholder": "把你的推断完整说出来",
+        "when": { "phase": ["guess"] }
+      },
+      {
+        "key": "speak",
+        "label": "插话",
+        "kind": "text",
+        "placeholder": "说点什么"
+      }
+    ]
+  }
+}

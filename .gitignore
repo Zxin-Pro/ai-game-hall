@@ -1,0 +1,11 @@
+node_modules
+.expo
+dist
+web-build
+*.log
+.env
+
+# android/ios 由 expo prebuild 生成，不入库
+app/android
+app/ios
+out

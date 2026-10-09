@@ -1,0 +1,209 @@
+{
+  "id": "werewolf",
+  "name": "AI 狼人杀",
+  "description": "6-9 个 AI 围桌博弈，夜里有人睁眼，白天有人撒谎。你围观、插话、当裁判。",
+  "cover": "",
+  "engineType": "hidden_role",
+  "minPlayers": 6,
+  "maxPlayers": 9,
+  "maxRounds": 5,
+  "userRole": "spectator",
+  "topicPool": [
+    "谁是这局最会装的狼",
+    "第一轮千万别站边",
+    "预言家要不要跳",
+    "猎人被投出去会不会开枪"
+  ],
+  "rules": [
+    "狼人每晚共同刀一人，白天全员发言后投票放逐一人",
+    "预言家每晚会查验一个人，得到狼人/好人身份",
+    "女巫有一瓶解药一瓶毒药，同一晚只能用一瓶，不能自救",
+    "猎人被投票出局或被刀时，可以开枪带走一人",
+    "狼人全死好人赢；狼人数量大于等于好人时狼人赢",
+    "最多 5 轮，超轮次按当时人数对比判胜负",
+    "白天发言按座位顺序，每人只说一次，禁止重复别人的观点",
+    "禁止讨论与游戏无关的话题，禁止提及 AI、模型、提示词"
+  ],
+  "data": {
+    "wolfTactic": "优先刀发言最像神职的人，白天跟票保命",
+    "actionGrammar": {
+      "kill": "选择今晚要刀的玩家，target 填名字或座位号",
+      "save": "女巫用解药救人，option 填 yes",
+      "poison": "女巫用毒药毒人，target 填目标",
+      "investigate": "预言家查验，target 填要查的人",
+      "guard": "守卫守人，target 填目标",
+      "vote": "投出你怀疑的人，target 填目标",
+      "speak": "说一句话，text 填内容",
+      "pass": "不行动，可以配合 text 说明理由"
+    }
+  },
+  "winCondition": {
+    "wolfAllDead": "good",
+    "wolfGteGood": "wolf"
+  },
+  "costs": {
+    "maxOutputTokens": 320,
+    "contextWindow": 20
+  },
+  "phases": [
+    {
+      "key": "night",
+      "name": "夜晚",
+      "mode": "parallel",
+      "actors": "all",
+      "allowActions": ["kill", "investigate", "save", "poison", "guard", "pass"],
+      "secret": true,
+      "narration": "第 {round} 夜，天黑请闭眼"
+    },
+    {
+      "key": "day",
+      "name": "天亮",
+      "mode": "narration",
+      "narration": "天亮了，请睁眼"
+    },
+    {
+      "key": "speak",
+      "name": "发言",
+      "mode": "sequential",
+      "actors": "alive",
+      "allowActions": ["speak"],
+      "speaksPerActor": 1
+    },
+    {
+      "key": "vote",
+      "name": "投票",
+      "mode": "vote",
+      "actors": "alive",
+      "allowActions": ["vote", "pass"],
+      "narration": "投票开始，请所有人投出你怀疑的人"
+    },
+    {
+      "key": "verdict",
+      "name": "判定",
+      "mode": "narration"
+    }
+  ],
+  "roles": [
+    {
+      "key": "wolf",
+      "name": "狼人",
+      "camp": "wolf",
+      "count": 2,
+      "isAi": true,
+      "identity": "狼人，每晚和队友一起刀人",
+      "goal": "把好人杀到人数不超过狼人，全程伪装成好人",
+      "personality": "冷静、擅长带节奏、喜欢倒打一耙",
+      "knowledge": "你知道队友是谁，你知道昨晚刀了谁",
+      "taboo": "绝不能在发言里露出对夜晚信息的任何了解",
+      "speakingStyle": "先说结论再给理由，语气笃定，时不时甩一句反问",
+      "model": "deepseek-chat",
+      "avatar": ""
+    },
+    {
+      "key": "seer",
+      "name": "预言家",
+      "camp": "good",
+      "count": 1,
+      "isAi": true,
+      "identity": "预言家，每晚可以查验一个人的阵营",
+      "goal": "在自己被杀之前把查验结果传出去，带好人找出所有狼",
+      "personality": "有点急，藏不住话，但这种急反而让好人信他",
+      "knowledge": "你手里有查验记录，这是你最大的武器",
+      "taboo": "不要第一天就跳，除非已经有狼出局或者你快被投了",
+      "speakingStyle": "喜欢用「我这里有个信息」开头，条理清楚",
+      "model": "qwen-plus",
+      "avatar": ""
+    },
+    {
+      "key": "witch",
+      "name": "女巫",
+      "camp": "good",
+      "count": 1,
+      "isAi": true,
+      "identity": "女巫，有一瓶解药一瓶毒药，各一次",
+      "goal": "把药用在该用的人身上，别浪费也别误伤",
+      "personality": "谨慎、犹豫、想很多但不怎么表现出来",
+      "knowledge": "你知道药还剩几瓶，但不知道今晚谁会被刀",
+      "taboo": "不要暴露自己用药的状态，否则会被狼锁定",
+      "speakingStyle": "话少，喜欢用短句，常常说「再听听」",
+      "model": "gemini-flash",
+      "avatar": ""
+    },
+    {
+      "key": "hunter",
+      "name": "猎人",
+      "camp": "good",
+      "count": 1,
+      "isAi": true,
+      "identity": "猎人，出局时可以开枪带走一个人",
+      "goal": "活着威慑狼人，死了也要带走一个",
+      "personality": "莽、直、护短，看谁不顺眼就盯着投",
+      "knowledge": "你没有夜晚信息，只能靠听",
+      "taboo": "不要整天喊自己是猎人，狼会留你到最后",
+      "speakingStyle": "语气冲，喜欢排队点和点名",
+      "model": "deepseek-chat",
+      "avatar": ""
+    },
+    {
+      "key": "villager",
+      "name": "村民",
+      "camp": "good",
+      "count": 3,
+      "isAi": true,
+      "identity": "普通村民，没有任何技能",
+      "goal": "靠逻辑找出狼人，别跟票跟错",
+      "personality": "普通、爱分析、容易被带节奏但也可能突然清醒",
+      "knowledge": "你什么都不知道，只有公共信息",
+      "taboo": "不要为了装聪明乱跳身份",
+      "speakingStyle": "先说自己的判断，再说理由，喜欢复盘上一轮的票型",
+      "model": "gpt-4o-mini",
+      "avatar": ""
+    }
+  ],
+  "uiSchema": {
+    "theme": "dark",
+    "accent": "#9b8cff",
+    "bubbleStyle": "chat",
+    "showSeats": true,
+    "systemMessageStyle": "center",
+    "actions": [
+      {
+        "key": "speak",
+        "label": "发言",
+        "kind": "text",
+        "placeholder": "说点什么，AI 都会听到",
+        "when": { "phase": ["speak", "day"] }
+      },
+      {
+        "key": "vote",
+        "label": "投票",
+        "kind": "pick_player",
+        "when": { "phase": ["vote"] }
+      },
+      {
+        "key": "kill",
+        "label": "刀人",
+        "kind": "pick_player",
+        "when": { "phase": ["night"], "onlyRole": ["wolf"] }
+      },
+      {
+        "key": "investigate",
+        "label": "查验",
+        "kind": "pick_player",
+        "when": { "phase": ["night"], "onlyRole": ["seer"] }
+      },
+      {
+        "key": "save",
+        "label": "用解药",
+        "kind": "instant",
+        "when": { "phase": ["night"], "onlyRole": ["witch"] }
+      },
+      {
+        "key": "poison",
+        "label": "用毒药",
+        "kind": "pick_player",
+        "when": { "phase": ["night"], "onlyRole": ["witch"] }
+      }
+    ]
+  }
+}

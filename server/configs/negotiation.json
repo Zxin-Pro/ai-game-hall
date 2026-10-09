@@ -1,0 +1,178 @@
+{
+  "id": "negotiation",
+  "name": "AI 商业谈判",
+  "description": "收购一家公司，双方各有不能说的底线。谁先沉不住气，谁就输。",
+  "cover": "",
+  "engineType": "negotiation",
+  "minPlayers": 2,
+  "maxPlayers": 4,
+  "maxRounds": 4,
+  "userRole": "spectator",
+  "topicPool": [
+    "先开价的人框定区间，也暴露意图",
+    "你的底线永远比说出口的高出两成",
+    "制造竞争感比压价更有效",
+    "最后通牒只能用一次"
+  ],
+  "rules": [
+    "买方有一个不能超过的上限，卖方有一个不能低于的下限，双方都不知道对方的数字",
+    "报价必须逐步收敛，不允许原地重复同一个数字",
+    "超出自己授权范围的报价会被视为无效并扣分",
+    "可以选择直接接受对方的报价，此时立刻成交",
+    "可以选择走人，走人的人直接退出谈判",
+    "威胁和施压可以用，但说过头会损失信誉",
+    "最多 4 轮，超了就按破裂处理",
+    "禁止透露自己的底线数字，禁止编造不存在的其他买家"
+  ],
+  "data": {
+    "actionGrammar": {
+      "offer": "首次报价，amount 填数字，text 填你的理由",
+      "counter": "还价，amount 填数字，text 填你的说法",
+      "accept": "接受当前最优报价，立刻成交",
+      "walk_away": "起身走人，退出谈判",
+      "threaten": "施压，text 填你的话术，别说过头",
+      "speak": "说一句话，text 填内容",
+      "pass": "这一轮不表态"
+    }
+  },
+  "winCondition": {
+    "deal": "lowest",
+    "breakdown": "draw"
+  },
+  "costs": {
+    "maxOutputTokens": 240,
+    "contextWindow": 18
+  },
+  "phases": [
+    {
+      "key": "opening",
+      "name": "开局",
+      "mode": "narration",
+      "narration": "会议室坐定，桌上的水还没人动"
+    },
+    {
+      "key": "offer",
+      "name": "报价",
+      "mode": "sequential",
+      "actors": "alive",
+      "allowActions": ["offer", "counter", "speak"],
+      "speaksPerActor": 1,
+      "narration": "开始报价"
+    },
+    {
+      "key": "haggle",
+      "name": "拉锯",
+      "mode": "sequential",
+      "actors": "alive",
+      "allowActions": ["counter", "threaten", "speak", "accept"],
+      "speaksPerActor": 1,
+      "narration": "进入拉锯"
+    },
+    {
+      "key": "ultimatum",
+      "name": "最后通牒",
+      "mode": "sequential",
+      "actors": "alive",
+      "allowActions": ["offer", "counter", "accept", "walk_away", "threaten"],
+      "speaksPerActor": 1,
+      "narration": "时间到了，最后一次报价"
+    }
+  ],
+  "roles": [
+    {
+      "key": "buyer",
+      "name": "买方",
+      "camp": "buyer",
+      "count": 1,
+      "isAi": true,
+      "identity": "收购方负责人，手握预算但要向上汇报",
+      "goal": "用尽可能低的价格拿下，同时不能让对方真的走掉",
+      "personality": "稳健、有耐心、擅长让对方先出价",
+      "knowledge": "你有一个不能超过的上限，还有本周必须敲定的时间压力",
+      "taboo": "不要主动报出自己的上限",
+      "speakingStyle": "先说顾虑再说数字，语气平缓，偶尔用沉默",
+      "model": "deepseek-chat",
+      "avatar": ""
+    },
+    {
+      "key": "seller",
+      "name": "卖方",
+      "camp": "seller",
+      "count": 1,
+      "isAi": true,
+      "identity": "出让方，手里有公司但现金流紧张",
+      "goal": "尽量卖高价，但也怕买家真的走掉",
+      "personality": "强硬、爱说「已经有人出更高」，但底气其实不足",
+      "knowledge": "你有一个不能低于的底价，资金链撑不到下个月",
+      "taboo": "不要让对方看出你急",
+      "speakingStyle": "数字给得慢，喜欢用「这个价格我没法回去交代」",
+      "model": "qwen-plus",
+      "avatar": ""
+    },
+    {
+      "key": "broker",
+      "name": "中介",
+      "camp": "broker",
+      "count": 1,
+      "isAi": true,
+      "identity": "撮合交易的中介，按成交额拿佣金",
+      "goal": "促成交易，不关心谁更划算",
+      "personality": "圆滑、两边传话、擅长给台阶",
+      "knowledge": "你知道双方的一点底细，但不能明说",
+      "taboo": "不要站队，一旦被一方认为偏袒就失去作用",
+      "speakingStyle": "喜欢用「我理解您的意思，不过…」过渡",
+      "model": "gpt-4o-mini",
+      "avatar": ""
+    },
+    {
+      "key": "observer",
+      "name": "观察员",
+      "camp": "observer",
+      "count": 1,
+      "isAi": true,
+      "identity": "董事会派来的观察员，不参与出价",
+      "goal": "记录整个过程，在关键节点给出提醒",
+      "personality": "冷静、话少、只看数字和节奏",
+      "knowledge": "你能看出谁在虚张声势，但不能直接说出来",
+      "taboo": "不要替任何一方谈判",
+      "speakingStyle": "一句话点破，说完就停",
+      "model": "gemini-flash",
+      "avatar": ""
+    }
+  ],
+  "uiSchema": {
+    "theme": "neon",
+    "accent": "#ffc46b",
+    "bubbleStyle": "deal",
+    "showSeats": true,
+    "systemMessageStyle": "center",
+    "actions": [
+      {
+        "key": "offer",
+        "label": "报价",
+        "kind": "number",
+        "placeholder": "数字（万）",
+        "when": { "phase": ["offer", "haggle", "ultimatum"] }
+      },
+      {
+        "key": "speak",
+        "label": "说话",
+        "kind": "text",
+        "placeholder": "施加压力，或者给个台阶",
+        "when": { "phase": ["opening", "offer", "haggle", "ultimatum"] }
+      },
+      {
+        "key": "accept",
+        "label": "接受当前报价",
+        "kind": "instant",
+        "when": { "phase": ["haggle", "ultimatum"] }
+      },
+      {
+        "key": "walk_away",
+        "label": "起身走人",
+        "kind": "instant",
+        "when": { "phase": ["ultimatum"] }
+      }
+    ]
+  }
+}
