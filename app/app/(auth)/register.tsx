@@ -3,8 +3,10 @@ import { useState } from 'react';
 import { Link, router } from 'expo-router';
 import { useAuth } from '../../src/store/auth';
 import { haptic } from '../../src/lib/ui';
+import { usePalette } from '../../src/store/theme';
 
 export default function Register() {
+  const t = usePalette();
   const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
   const [inviteCode, setInviteCode] = useState('');
@@ -60,7 +62,7 @@ export default function Register() {
           className={`rounded-2xl py-3.5 items-center mt-3 ${valid ? 'bg-accent' : 'bg-soft'}`}
         >
           {loading
-            ? <ActivityIndicator color="#0b0912" />
+            ? <ActivityIndicator color={t.onAccent} />
             : <Text className={`font-bold text-[15px] ${valid ? 'text-onaccent' : 'text-faint'}`}>注册</Text>}
         </Pressable>
 

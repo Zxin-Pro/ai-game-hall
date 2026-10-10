@@ -4,6 +4,8 @@ import { router, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../src/lib/api';
 import { timeAgo, haptic } from '../../src/lib/ui';
+import { usePalette } from '../../src/store/theme';
+import type { Palette } from '../../src/lib/theme';
 
 interface RoomRow {
   id: string;
@@ -18,16 +20,19 @@ interface RoomRow {
   message_count: string;
 }
 
-const STATUS: Record<string, { label: string; color: string }> = {
-  waiting:  { label: '等人开局', color: '#ffc46b' },
-  running:  { label: '进行中',   color: '#5ee0a8' },
-  voting:   { label: '投票中',   color: '#ff8fb1' },
-  finished: { label: '已结束',   color: 'rgba(255,255,255,0.35)' },
-  archived: { label: '已归档',   color: 'rgba(255,255,255,0.25)' },
-};
+/** 状态色跟着当前配色走 */
+const statusMap = (t: Palette): Record<string, { label: string; color: string }> => ({
+  waiting:  { label: '等人开局', color: t.warm },
+  running:  { label: '进行中',   color: t.online },
+  voting:   { label: '投票中',   color: t.accentText },
+  finished: { label: '已结束',   color: t.sub },
+  archived: { label: '已归档',   color: t.faint },
+});
 
 export default function MyRooms() {
   const insets = useSafeAreaInsets();
+  const t = usePalette();
+  const STATUS = statusMap(t);
   const [rooms, setRooms] = useState<RoomRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

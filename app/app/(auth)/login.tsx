@@ -3,8 +3,10 @@ import { useState } from 'react';
 import { Link, router } from 'expo-router';
 import { useAuth } from '../../src/store/auth';
 import { haptic } from '../../src/lib/ui';
+import { usePalette } from '../../src/store/theme';
 
 export default function Login() {
+  const t = usePalette();
   const [nickname, setNickname] = useState('');
   const [password, setPassword] = useState('');
   const login = useAuth((s) => s.login);
@@ -56,7 +58,7 @@ export default function Login() {
           }`}
         >
           {loading
-            ? <ActivityIndicator color="#0b0912" />
+            ? <ActivityIndicator color={t.onAccent} />
             : <Text className={`font-bold text-[15px] ${nickname.trim() && password ? 'text-onaccent' : 'text-faint'}`}>登录</Text>}
         </Pressable>
 

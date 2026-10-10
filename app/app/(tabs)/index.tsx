@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../src/lib/api';
 import { haptic } from '../../src/lib/ui';
+import { usePalette } from '../../src/store/theme';
 import { useNet } from '../../src/store/net';
 import type { GameCard } from '../../src/types';
 
@@ -15,13 +16,8 @@ const ENGINE_LABEL: Record<string, string> = {
   simulation: '模拟经营',
 };
 
-const ENGINE_COLOR: Record<string, string> = {
-  hidden_role: '#9b8cff',
-  group_chat: '#ff8fb1',
-  debate: '#5fd0f5',
-  negotiation: '#ffc46b',
-  simulation: '#5ee0a8',
-};
+/** 引擎配色的顺序（真正的颜色从当前配色的座位色里取，浅色主题也不会看不清） */
+const ENGINE_ORDER = ['hidden_role', 'group_chat', 'debate', 'negotiation', 'simulation'];
 
 const EMOJI: Record<string, string> = {
   werewolf: '🐺', undercover: '🕵️', dating: '💗', 'turtle-soup': '🐢',
@@ -30,6 +26,7 @@ const EMOJI: Record<string, string> = {
 
 export default function GameHall() {
   const insets = useSafeAreaInsets();
+  const t = usePalette();
   const offline = useNet((s) => s.offline);
   const [games, setGames] = useState<GameCard[]>([]);
   const [stats, setStats] = useState<{ rooms: string; messages: string } | null>(null);
@@ -97,7 +94,7 @@ export default function GameHall() {
           )}
 
           {games.map((g) => {
-            const color = ENGINE_COLOR[g.engineType] ?? '#9b8cff';
+            const color = t.seats[ENGINE_ORDER.indexOf(g.engineType) % t.seats.length] ?? t.accent;
             return (
               <Pressable
                 key={g.id}
