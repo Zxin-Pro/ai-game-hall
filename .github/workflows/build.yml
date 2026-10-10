@@ -195,8 +195,23 @@ jobs:
           echo "登记 $APP_VERSION_NAME ($APP_VERSION_CODE)"
           printf '{"versionCode":%s,"versionName":"%s","note":"%s","sourceUrl":"%s"}' "$APP_VERSION_CODE" "$APP_VERSION_NAME" "$NOTE" "$SRC" > /tmp/pub.json
           cat /tmp/pub.json
-          curl -sS --http1.1 -m 300 -X POST "$URL/api/admin/sync-apk" \
-            -H "x-admin-key: $KEY" \
-            -H 'content-type: application/json' \
-            --data @/tmp/pub.json \
-            -w "\nHTTP %{http_code}\n"
+          # ★ 这一步是「锦上添花」，不能让它把整个构建判失败。
+          #   runner 到这台 VPS 的连接时好时坏（HTTP 000 / 超时），
+          #   APK 早就构建好并传上 Release 了，登记失败大不了手动补一次。
+          ok=0
+          for i in 1 2 3 4 5; do
+            code=$(curl -sS --http1.1 -m 240 --retry 2 --retry-delay 5 \
+              -X POST "$URL/api/admin/sync-apk" \
+              -H "x-admin-key: $KEY" \
+              -H 'content-type: application/json' \
+              --data @/tmp/pub.json \
+              -o /tmp/pub.out -w "%{http_code}" 2>/dev/null) || code=000
+            echo "第 $i 次登记 -> HTTP $code"
+            cat /tmp/pub.out 2>/dev/null; echo
+            if [ "$code" = "200" ]; then ok=1; break; fi
+            sleep 10
+          done
+          if [ "$ok" != "1" ]; then
+            echo "::warning::服务端登记没成功（APK 和 Release 都是好的），可手动补登记"
+          fi
+          exit 0
