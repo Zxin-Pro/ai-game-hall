@@ -1,6 +1,7 @@
 import { View, Text, Pressable, TextInput, ScrollView, Image } from 'react-native';
 import { useState } from 'react';
 import { haptic } from '../lib/ui';
+import { usePalette } from '../store/theme';
 import type { RoomPlayer, UiAction, UiSchema } from '../types';
 
 /* ------------------------------------------------------------------ */
@@ -27,6 +28,7 @@ export function Composer({
   uiSchema, phase, players, waitingForMe, onSend, onAct, myRoleKey,
   quoting, onCancelQuote,
 }: Props) {
+  const t = usePalette();
   const [text, setText] = useState('');
   const [picking, setPicking] = useState<UiAction | null>(null);
   const [amount, setAmount] = useState('');
@@ -52,16 +54,16 @@ export function Composer({
   };
 
   return (
-    <View className="bg-ink-900/95 border-t border-white/10">
+    <View className="border-t" style={{ backgroundColor: t.panel, borderTopColor: t.line }}>
       {/* 引用条 */}
       {!!quoting && (
         <View className="flex-row items-center px-3 pt-2">
-          <View className="flex-1 border-l-2 border-lamp pl-2">
-            <Text className="text-lamp-soft text-[10px]">{quoting.name}</Text>
-            <Text className="text-white/40 text-[11px]" numberOfLines={1}>{quoting.text}</Text>
+          <View className="flex-1 border-l-2 border-accentline pl-2">
+            <Text className="text-accenttext text-[10px]">{quoting.name}</Text>
+            <Text className="text-sub text-[11px]" numberOfLines={1}>{quoting.text}</Text>
           </View>
           <Pressable onPress={onCancelQuote} hitSlop={8} className="pl-3">
-            <Text className="text-white/35 text-[12px]">✕</Text>
+            <Text className="text-sub text-[12px]">✕</Text>
           </Pressable>
         </View>
       )}
@@ -70,11 +72,11 @@ export function Composer({
       {picking && (
         <View className="px-3 pt-3 pb-1">
           <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-white/60 text-xs">
+            <Text className="text-sub text-xs">
               {picking.kind === 'pick_option' ? picking.label : `选择目标 · ${picking.label}`}
             </Text>
             <Pressable onPress={() => setPicking(null)} hitSlop={8}>
-              <Text className="text-white/40 text-xs">取消</Text>
+              <Text className="text-sub text-xs">取消</Text>
             </Pressable>
           </View>
 
@@ -84,9 +86,9 @@ export function Composer({
                 <Pressable
                   key={o.value}
                   onPress={() => { onAct(picking.key, { option: o.value }); setPicking(null); }}
-                  className="bg-ink-700 rounded-full px-4 py-2 mr-2 mb-2"
+                  className="bg-soft rounded-full px-4 py-2 mr-2 mb-2"
                 >
-                  <Text className="text-white/85 text-[13px]">{o.label}</Text>
+                  <Text className="text-body text-[13px]">{o.label}</Text>
                 </Pressable>
               ))}
             </View>
@@ -101,10 +103,11 @@ export function Composer({
                 >
                   <Image
                     source={{ uri: p.avatar ?? `https://api.dicebear.com/7.x/bottts/png?seed=${encodeURIComponent(p.name)}` }}
-                    className="w-11 h-11 rounded-full bg-ink-700"
+                    className="w-11 h-11 rounded-full"
+                    style={{ backgroundColor: t.soft }}
                   />
-                  <Text className="text-white/70 text-[10px] mt-1">{p.seat + 1} 号</Text>
-                  <Text className="text-white/50 text-[10px]" numberOfLines={1}>{p.name}</Text>
+                  <Text className="text-body text-[10px] mt-1">{p.seat + 1} 号</Text>
+                  <Text className="text-sub text-[10px]" numberOfLines={1}>{p.name}</Text>
                 </Pressable>
               ))}
             </ScrollView>
@@ -129,8 +132,8 @@ export function Composer({
 
       {/* 轮到你时的高亮提示 */}
       {waitingForMe && (
-        <View className="bg-lamp/20 px-3 py-1.5">
-          <Text className="text-lamp-soft text-[11px] text-center font-semibold">轮到你了</Text>
+        <View className="bg-accentsoft px-3 py-1.5">
+          <Text className="text-accenttext text-[11px] text-center font-semibold">轮到你了</Text>
         </View>
       )}
 
@@ -148,19 +151,19 @@ export function Composer({
           value={text}
           onChangeText={setText}
           placeholder={textAction?.placeholder ?? '插一句话…'}
-          placeholderTextColor="rgba(255,255,255,0.3)"
+          placeholderTextColor={t.faint}
           multiline
           maxLength={300}
-          className="flex-1 bg-ink-800 rounded-2xl px-3 py-2 text-white/90 text-[15px] max-h-24"
+          className="flex-1 bg-card rounded-2xl px-3 py-2 text-body text-[15px] max-h-24"
           style={{ minHeight: 40 }}
         />
         <Pressable
           onPress={submitText}
           disabled={!text.trim()}
-          className={`ml-2 px-4 rounded-2xl justify-center ${text.trim() ? 'bg-lamp' : 'bg-ink-700'}`}
+          className={`ml-2 px-4 rounded-2xl justify-center ${text.trim() ? 'bg-accent' : 'bg-soft'}`}
           style={{ height: 40 }}
         >
-          <Text className={`font-semibold ${text.trim() ? 'text-ink-950' : 'text-white/30'}`}>发送</Text>
+          <Text className={`font-semibold ${text.trim() ? 'text-onaccent' : 'text-faint'}`}>发送</Text>
         </Pressable>
       </View>
 
@@ -173,9 +176,9 @@ export function Composer({
                 <Pressable
                   key={a.key}
                   onPress={() => { haptic.medium(); onAct(a.key); }}
-                  className="bg-ink-700 border border-lamp/40 rounded-full px-4 py-1.5 mr-2 mb-1.5"
+                  className="bg-soft border border-accentline rounded-full px-4 py-1.5 mr-2 mb-1.5"
                 >
-                  <Text className="text-lamp-soft text-[13px]">{a.label}</Text>
+                  <Text className="text-accenttext text-[13px]">{a.label}</Text>
                 </Pressable>
               );
             }
@@ -187,8 +190,8 @@ export function Composer({
                     onChangeText={setAmount}
                     keyboardType="number-pad"
                     placeholder={a.placeholder ?? '数字'}
-                    placeholderTextColor="rgba(255,255,255,0.3)"
-                    className="bg-ink-800 rounded-full px-3 py-1.5 text-white/90 text-[13px] w-24"
+                    placeholderTextColor={t.faint}
+                    className="bg-card rounded-full px-3 py-1.5 text-body text-[13px] w-24"
                   />
                   <Pressable
                     onPress={() => {
@@ -197,9 +200,9 @@ export function Composer({
                       onAct(a.key, { amount: n });
                       setAmount('');
                     }}
-                    className="bg-lamp rounded-full px-3 py-1.5 ml-2"
+                    className="bg-accent rounded-full px-3 py-1.5 ml-2"
                   >
-                    <Text className="text-ink-950 text-[13px] font-semibold">{a.label}</Text>
+                    <Text className="text-onaccent text-[13px] font-semibold">{a.label}</Text>
                   </Pressable>
                 </View>
               );
@@ -208,9 +211,9 @@ export function Composer({
               <Pressable
                 key={a.key}
                 onPress={() => { haptic.light(); setPicking(a); }}
-                className="bg-ink-700 border border-white/15 rounded-full px-4 py-1.5 mr-2 mb-1.5"
+                className="bg-soft border border-line rounded-full px-4 py-1.5 mr-2 mb-1.5"
               >
-                <Text className="text-white/85 text-[13px]">{a.label}</Text>
+                <Text className="text-body text-[13px]">{a.label}</Text>
               </Pressable>
             );
           })}

@@ -1,5 +1,6 @@
 import { View, Text, Image, Pressable } from 'react-native';
 import { seatColor } from '../lib/ui';
+import { usePalette } from '../store/theme';
 import type { RoomPlayer } from '../types';
 
 /* ------------------------------------------------------------------ */
@@ -17,8 +18,12 @@ export function SeatStrip({
   myPlayerId?: string | null;
   onPress?: (p: RoomPlayer) => void;
 }) {
+  const t = usePalette();
   return (
-    <View className="px-3 py-2 bg-ink-900/80 border-b border-white/5">
+    <View
+      className="px-3 py-2 border-b"
+      style={{ backgroundColor: t.panel, borderBottomColor: t.line }}
+    >
       <View className="flex-row flex-wrap">
         {players.map((p) => {
           const c = seatColor(p.seat);
@@ -35,19 +40,20 @@ export function SeatStrip({
                 className="rounded-full p-[2px]"
                 style={{
                   borderWidth: active ? 2 : me ? 1.5 : 0,
-                  borderColor: active ? c : me ? '#ffc46b' : 'transparent',
+                  borderColor: active ? c : me ? t.warm : 'transparent',
                 }}
               >
                 <Image
                   source={{ uri: p.avatar ?? `https://api.dicebear.com/7.x/bottts/png?seed=${encodeURIComponent(p.name)}` }}
-                  className="w-9 h-9 rounded-full bg-ink-700"
+                  className="w-9 h-9 rounded-full"
+                  style={{ backgroundColor: t.soft }}
                 />
               </View>
-              <Text className="text-[9px] mt-0.5" style={{ color: p.alive ? c : 'rgba(255,255,255,0.35)' }}>
+              <Text className="text-[9px] mt-0.5" style={{ color: p.alive ? c : t.faint }}>
                 {p.seat + 1}·{p.name.length > 4 ? p.name.slice(0, 4) : p.name}
               </Text>
               {!p.alive && (
-                <Text className="text-[8px] text-danger/70 mt-[-2px]">出局</Text>
+                <Text className="text-[8px] text-danger mt-[-2px]">出局</Text>
               )}
             </Pressable>
           );

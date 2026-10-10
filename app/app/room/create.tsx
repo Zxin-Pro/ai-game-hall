@@ -35,7 +35,7 @@ export default function CreateRoom() {
 
   if (!game) {
     return (
-      <View className="flex-1 bg-ink-950 items-center justify-center">
+      <View className="flex-1 bg-page items-center justify-center">
         <ActivityIndicator color="#9b8cff" />
       </View>
     );
@@ -74,18 +74,18 @@ export default function CreateRoom() {
   };
 
   return (
-    <View className="flex-1 bg-ink-950" style={{ paddingTop: insets.top }}>
+    <View className="flex-1 bg-page" style={{ paddingTop: insets.top }}>
       <View className="flex-row items-center px-4 pt-2 pb-3">
         <Pressable onPress={() => router.back()} hitSlop={10}>
-          <Text className="text-white/50 text-[14px]">取消</Text>
+          <Text className="text-sub text-[14px]">取消</Text>
         </Pressable>
-        <Text className="text-white text-[16px] font-semibold flex-1 text-center">{game.name}</Text>
-        <Text className="text-white/30 text-[12px] w-[36px] text-right">{totalSeats} 人</Text>
+        <Text className="text-body text-[16px] font-semibold flex-1 text-center">{game.name}</Text>
+        <Text className="text-faint text-[12px] w-[36px] text-right">{totalSeats} 人</Text>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 120 }}>
         {/* 话题 */}
-        <Text className="text-white/70 text-[14px] font-semibold mt-2 mb-2">开局话题</Text>
+        <Text className="text-body text-[14px] font-semibold mt-2 mb-2">开局话题</Text>
         <TextInput
           value={topic}
           onChangeText={setTopic}
@@ -93,7 +93,7 @@ export default function CreateRoom() {
           placeholderTextColor="rgba(255,255,255,0.25)"
           maxLength={120}
           multiline
-          className="bg-ink-900 rounded-2xl px-4 py-3 text-white/85 text-[13px] min-h-[58px]"
+          className="bg-panel rounded-2xl px-4 py-3 text-body text-[13px] min-h-[58px]"
         />
         {!!game.topicPool?.length && (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mt-2">
@@ -101,16 +101,16 @@ export default function CreateRoom() {
               <Pressable
                 key={t}
                 onPress={() => { haptic.light(); setTopic(t); }}
-                className="bg-ink-800 rounded-full px-3 py-1.5 mr-2"
+                className="bg-card rounded-full px-3 py-1.5 mr-2"
               >
-                <Text className="text-white/50 text-[11px]">{t}</Text>
+                <Text className="text-sub text-[11px]">{t}</Text>
               </Pressable>
             ))}
           </ScrollView>
         )}
 
         {/* 轮次 */}
-        <Text className="text-white/70 text-[14px] font-semibold mt-7 mb-2">
+        <Text className="text-body text-[14px] font-semibold mt-7 mb-2">
           最多几轮（越多越贵，体验也越完整）
         </Text>
         <View className="flex-row">
@@ -118,9 +118,9 @@ export default function CreateRoom() {
             <Pressable
               key={n}
               onPress={() => { haptic.light(); setRoundLimit(n); }}
-              className={`rounded-xl px-4 py-2 mr-2 ${roundLimit === n ? 'bg-lamp' : 'bg-ink-800'}`}
+              className={`rounded-xl px-4 py-2 mr-2 ${roundLimit === n ? 'bg-accent' : 'bg-card'}`}
             >
-              <Text className={`text-[13px] font-semibold ${roundLimit === n ? 'text-ink-950' : 'text-white/55'}`}>
+              <Text className={`text-[13px] font-semibold ${roundLimit === n ? 'text-onaccent' : 'text-sub'}`}>
                 {n} 轮
               </Text>
             </Pressable>
@@ -128,17 +128,17 @@ export default function CreateRoom() {
         </View>
 
         {/* 角色配比 */}
-        <Text className="text-white/70 text-[14px] font-semibold mt-7 mb-2">AI 角色</Text>
+        <Text className="text-body text-[14px] font-semibold mt-7 mb-2">AI 角色</Text>
         {game.roles.map((r, i) => (
-          <View key={r.key} className="flex-row items-center bg-ink-900 rounded-2xl p-3 mb-2">
+          <View key={r.key} className="flex-row items-center bg-panel rounded-2xl p-3 mb-2">
             <View className="w-1 self-stretch rounded-full mr-3" style={{ backgroundColor: seatColor(i) }} />
             <Image
               source={{ uri: r.avatar || `https://api.dicebear.com/7.x/bottts/png?seed=${encodeURIComponent(game.id + r.key)}` }}
-              className="w-9 h-9 rounded-full bg-ink-700 mr-3"
+              className="w-9 h-9 rounded-full bg-soft mr-3"
             />
             <View className="flex-1">
-              <Text className="text-white text-[13px] font-semibold">{r.name}</Text>
-              <Text className="text-white/35 text-[11px] mt-0.5" numberOfLines={1}>
+              <Text className="text-body text-[13px] font-semibold">{r.name}</Text>
+              <Text className="text-sub text-[11px] mt-0.5" numberOfLines={1}>
                 {r.model ? `模型 ${r.model}` : '默认模型'}
               </Text>
             </View>
@@ -153,15 +153,15 @@ export default function CreateRoom() {
         {/* 我参战 */}
         <Pressable
           onPress={() => { haptic.light(); setJoinAsPlayer((v) => !v); }}
-          className="flex-row items-center justify-between bg-ink-900 rounded-2xl px-4 py-3.5 mt-3"
+          className="flex-row items-center justify-between bg-panel rounded-2xl px-4 py-3.5 mt-3"
         >
           <View className="flex-1">
-            <Text className="text-white/80 text-[13px]">我也下场玩</Text>
-            <Text className="text-white/30 text-[11px] mt-0.5">
+            <Text className="text-body text-[13px]">我也下场玩</Text>
+            <Text className="text-faint text-[11px] mt-0.5">
               {game.userRole === 'player' ? '这个游戏你本来就是主角' : '不勾选就是纯围观 + 插话'}
             </Text>
           </View>
-          <View className={`w-11 h-6 rounded-full ${joinAsPlayer ? 'bg-lamp' : 'bg-ink-700'} justify-center px-0.5`}>
+          <View className={`w-11 h-6 rounded-full ${joinAsPlayer ? 'bg-accent' : 'bg-soft'} justify-center px-0.5`}>
             <View className={`w-5 h-5 rounded-full bg-white ${joinAsPlayer ? 'self-end' : 'self-start'}`} />
           </View>
         </Pressable>
@@ -173,15 +173,15 @@ export default function CreateRoom() {
         )}
       </ScrollView>
 
-      <View className="absolute left-0 right-0 bottom-0 px-4 pb-6 pt-3 bg-ink-950/95 border-t border-white/5">
+      <View className="absolute left-0 right-0 bottom-0 px-4 pb-6 pt-3 bg-page border-t border-line">
         <Pressable
           onPress={create}
           disabled={creating}
-          className={`rounded-2xl py-3.5 items-center ${creating ? 'bg-ink-700' : 'bg-lamp'}`}
+          className={`rounded-2xl py-3.5 items-center ${creating ? 'bg-soft' : 'bg-accent'}`}
         >
           {creating
             ? <ActivityIndicator color="#0b0912" />
-            : <Text className="text-ink-950 font-bold text-[15px]">开这一局</Text>}
+            : <Text className="text-onaccent font-bold text-[15px]">开这一局</Text>}
         </Pressable>
       </View>
     </View>
@@ -193,16 +193,16 @@ function Stepper({ value, max, onChange }: { value: number; max: number; onChang
     <View className="flex-row items-center">
       <Pressable
         onPress={() => { haptic.light(); onChange(Math.max(0, value - 1)); }}
-        className="w-7 h-7 rounded-full bg-ink-700 items-center justify-center"
+        className="w-7 h-7 rounded-full bg-soft items-center justify-center"
       >
-        <Text className="text-white/60 text-[16px] leading-5">−</Text>
+        <Text className="text-sub text-[16px] leading-5">−</Text>
       </Pressable>
-      <Text className="text-white/85 text-[14px] w-7 text-center">{value}</Text>
+      <Text className="text-body text-[14px] w-7 text-center">{value}</Text>
       <Pressable
         onPress={() => { haptic.light(); onChange(Math.min(max, value + 1)); }}
-        className="w-7 h-7 rounded-full bg-ink-700 items-center justify-center"
+        className="w-7 h-7 rounded-full bg-soft items-center justify-center"
       >
-        <Text className="text-white/60 text-[16px] leading-5">+</Text>
+        <Text className="text-sub text-[16px] leading-5">+</Text>
       </Pressable>
     </View>
   );

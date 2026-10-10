@@ -1,26 +1,28 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { usePalette } from '../../src/store/theme';
 
 /* ------------------------------------------------------------------ */
-/* 底部四个 Tab                                                         */
+/* 底部四个 Tab（配色跟着主题走）                                        */
 /* ------------------------------------------------------------------ */
 
 export default function TabsLayout() {
+  const t = usePalette();
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#141021',
-          borderTopColor: 'rgba(255,255,255,0.07)',
+          backgroundColor: t.panel,
+          borderTopColor: t.line,
           height: 58,
           paddingBottom: 6,
           paddingTop: 6,
         },
-        tabBarActiveTintColor: '#9b8cff',
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.35)',
+        tabBarActiveTintColor: t.accent,
+        tabBarInactiveTintColor: t.faint,
         tabBarLabelStyle: { fontSize: 10 },
-        sceneStyle: { backgroundColor: '#0b0912' },
+        sceneStyle: { backgroundColor: t.bg },
       }}
     >
       <Tabs.Screen

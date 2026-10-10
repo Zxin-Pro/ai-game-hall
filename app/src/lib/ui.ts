@@ -7,17 +7,31 @@ import { Platform } from 'react-native';
 
 export type AvatarStyle = 'bottts' | 'thumbs' | 'adventurer' | 'lorelei' | 'notionists';
 
+/** 头像底色，跟着配色走（由 store/theme 写入） */
+let avatarBg = '1c1730,262040,332b52';
+
 export function dicebear(seed: string, style: AvatarStyle = 'bottts'): string {
-  return `https://api.dicebear.com/7.x/${style}/png?seed=${encodeURIComponent(seed)}&backgroundColor=1c1730,262040,332b52`;
+  return `https://api.dicebear.com/7.x/${style}/png?seed=${encodeURIComponent(seed)}&backgroundColor=${avatarBg}`;
 }
 
 /* ------------------------------------------------------------------ */
 /* 配色：按座位分色，和 config 的 COLORS 对齐                             */
+/*                                                                     */
+/* ★ 以前这里是写死的常量数组，浅色主题下这些亮色名字会看不清。         */
+/*   改成跟着当前配色走：store/theme 换方案时调 setSeatColors 更新。     */
 /* ------------------------------------------------------------------ */
 
-export const SEAT_COLORS = ['#9b8cff', '#5fd0f5', '#5ee0a8', '#ffc46b', '#ff8fb1', '#a0e06a', '#c9a0ff', '#7fe3d4', '#ff9f7a'];
+let SEAT_COLORS = ['#9b8cff', '#5fd0f5', '#5ee0a8', '#ffc46b', '#ff8fb1', '#a0e06a', '#c9a0ff', '#7fe3d4', '#ff9f7a'];
+
+/** 换配色时同步座位色 + 头像底色（十六进制不带 #，给 dicebear 用） */
+export function setSeatColors(seats: string[], bgHex?: string[]) {
+  if (seats.length) SEAT_COLORS = seats;
+  if (bgHex?.length) avatarBg = bgHex.join(',');
+}
 
 export const seatColor = (seat: number) => SEAT_COLORS[seat % SEAT_COLORS.length]!;
+
+export { SEAT_COLORS };
 
 /* ------------------------------------------------------------------ */
 /* 震动：只在关键节点，不要每句话都震                                     */

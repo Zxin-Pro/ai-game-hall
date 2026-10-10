@@ -149,7 +149,7 @@ export default function RoomScreen() {
 
   if (loading) {
     return (
-      <View className="flex-1 bg-ink-950 items-center justify-center">
+      <View className="flex-1 bg-page items-center justify-center">
         <ActivityIndicator color="#9b8cff" />
       </View>
     );
@@ -157,10 +157,10 @@ export default function RoomScreen() {
 
   if (error || !room) {
     return (
-      <View className="flex-1 bg-ink-950 items-center justify-center px-8">
+      <View className="flex-1 bg-page items-center justify-center px-8">
         <Text className="text-danger text-[14px] text-center">{error ?? '房间不存在'}</Text>
         <Pressable onPress={() => router.back()} className="mt-5">
-          <Text className="text-lamp text-[13px]">返回</Text>
+          <Text className="text-accenttext text-[13px]">返回</Text>
         </Pressable>
       </View>
     );
@@ -169,34 +169,34 @@ export default function RoomScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      className="flex-1 bg-ink-950"
+      className="flex-1 bg-page"
       style={{ paddingTop: insets.top }}
     >
       {/* 顶栏 */}
-      <View className="flex-row items-center px-3 py-2.5 border-b border-white/5">
+      <View className="flex-row items-center px-3 py-2.5 border-b border-line">
         <Pressable onPress={() => router.back()} hitSlop={10} className="pr-2">
-          <Text className="text-white/50 text-[16px]">‹</Text>
+          <Text className="text-sub text-[16px]">‹</Text>
         </Pressable>
 
         <View className="flex-1">
           <View className="flex-row items-center">
-            <Text className="text-white text-[15px] font-semibold" numberOfLines={1}>
+            <Text className="text-body text-[15px] font-semibold" numberOfLines={1}>
               {room.game_name}
             </Text>
-            <View className={`ml-2 w-1.5 h-1.5 rounded-full ${connected ? 'bg-mint' : 'bg-danger'}`} />
+            <View className={`ml-2 w-1.5 h-1.5 rounded-full ${connected ? 'bg-online' : 'bg-danger'}`} />
             {paused && <Text className="text-warm text-[10px] ml-2">已暂停</Text>}
             {demo && <Text className="text-warm text-[10px] ml-2">演示</Text>}
           </View>
-          <Text className="text-white/35 text-[10px] mt-0.5" numberOfLines={1}>
+          <Text className="text-sub text-[10px] mt-0.5" numberOfLines={1}>
             第 {room.round} 轮 · {phaseLabel(room.phase)} · {room.topic || '无话题'}
           </Text>
         </View>
 
         <Pressable onPress={() => void togglePause()} hitSlop={8} className="px-2">
-          <Text className="text-white/50 text-[12px]">{paused ? '继续' : '暂停'}</Text>
+          <Text className="text-sub text-[12px]">{paused ? '继续' : '暂停'}</Text>
         </Pressable>
         <Pressable onPress={() => router.push(`/room/${id}/replay`)} hitSlop={8} className="px-2">
-          <Text className="text-white/50 text-[12px]">回放</Text>
+          <Text className="text-sub text-[12px]">回放</Text>
         </Pressable>
         <Pressable
           hitSlop={8}
@@ -210,7 +210,7 @@ export default function RoomScreen() {
           ])}
           className="pl-1"
         >
-          <Text className="text-white/50 text-[12px]">退出</Text>
+          <Text className="text-sub text-[12px]">退出</Text>
         </Pressable>
       </View>
 
@@ -244,7 +244,7 @@ export default function RoomScreen() {
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
         ListEmptyComponent={
           <View className="items-center mt-20 px-10">
-            <Text className="text-white/30 text-[13px] text-center leading-5">
+            <Text className="text-faint text-[13px] text-center leading-5">
               {room.status === 'waiting'
                 ? '都坐好了，点下面的按钮开局'
                 : 'AI 们正在酝酿第一句话'}
@@ -255,15 +255,15 @@ export default function RoomScreen() {
 
       {/* 底部 */}
       {room.status === 'waiting' ? (
-        <View className="px-4 pb-6 pt-3 border-t border-white/5">
+        <View className="px-4 pb-6 pt-3 border-t border-line">
           <Pressable
             onPress={onStart}
             disabled={starting}
-            className={`rounded-2xl py-3.5 items-center ${starting ? 'bg-ink-700' : 'bg-lamp'}`}
+            className={`rounded-2xl py-3.5 items-center ${starting ? 'bg-soft' : 'bg-accent'}`}
           >
             {starting
               ? <ActivityIndicator color="#0b0912" />
-              : <Text className="text-ink-950 font-bold text-[15px]">开始</Text>}
+              : <Text className="text-onaccent font-bold text-[15px]">开始</Text>}
           </Pressable>
         </View>
       ) : (
@@ -282,8 +282,8 @@ export default function RoomScreen() {
 
       {!connected && room.status !== 'waiting' && (
         <View className="absolute bottom-[104px] left-0 right-0 items-center">
-          <View className="bg-ink-800 rounded-full px-3 py-1">
-            <Text className="text-white/50 text-[10px]">正在重连…</Text>
+          <View className="bg-card rounded-full px-3 py-1">
+            <Text className="text-sub text-[10px]">正在重连…</Text>
           </View>
         </View>
       )}

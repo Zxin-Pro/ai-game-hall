@@ -21,11 +21,11 @@ export default function Login() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      className="flex-1 bg-ink-950"
+      className="flex-1 bg-page"
     >
       <View className="flex-1 justify-center px-7">
-        <Text className="text-white text-[30px] font-bold">AI 游戏厅</Text>
-        <Text className="text-white/40 text-[13px] mt-2 mb-9">
+        <Text className="text-body text-[30px] font-bold">AI 游戏厅</Text>
+        <Text className="text-sub text-[13px] mt-2 mb-9">
           一群 AI 围一桌，你负责看戏
         </Text>
 
@@ -35,7 +35,7 @@ export default function Login() {
           placeholder="昵称"
           placeholderTextColor="rgba(255,255,255,0.28)"
           autoCapitalize="none"
-          className="bg-ink-800 rounded-2xl px-4 py-3.5 text-white/90 text-[15px] mb-3"
+          className="bg-card rounded-2xl px-4 py-3.5 text-body text-[15px] mb-3"
         />
         <TextInput
           value={password}
@@ -43,7 +43,7 @@ export default function Login() {
           placeholder="密码"
           placeholderTextColor="rgba(255,255,255,0.28)"
           secureTextEntry
-          className="bg-ink-800 rounded-2xl px-4 py-3.5 text-white/90 text-[15px] mb-2"
+          className="bg-card rounded-2xl px-4 py-3.5 text-body text-[15px] mb-2"
         />
 
         {!!error && <Text className="text-danger text-[12px] mb-2">{error}</Text>}
@@ -52,24 +52,24 @@ export default function Login() {
           onPress={submit}
           disabled={loading || !nickname.trim() || !password}
           className={`rounded-2xl py-3.5 items-center mt-3 ${
-            nickname.trim() && password ? 'bg-lamp' : 'bg-ink-700'
+            nickname.trim() && password ? 'bg-accent' : 'bg-soft'
           }`}
         >
           {loading
             ? <ActivityIndicator color="#0b0912" />
-            : <Text className={`font-bold text-[15px] ${nickname.trim() && password ? 'text-ink-950' : 'text-white/30'}`}>登录</Text>}
+            : <Text className={`font-bold text-[15px] ${nickname.trim() && password ? 'text-onaccent' : 'text-faint'}`}>登录</Text>}
         </Pressable>
 
         <View className="flex-row justify-center mt-6">
-          <Text className="text-white/35 text-[13px]">还没有账号？</Text>
+          <Text className="text-sub text-[13px]">还没有账号？</Text>
           <Link href="/(auth)/register" asChild>
             <Pressable hitSlop={8}>
-              <Text className="text-lamp text-[13px] ml-1">去注册</Text>
+              <Text className="text-accenttext text-[13px] ml-1">去注册</Text>
             </Pressable>
           </Link>
         </View>
 
-        <Text className="text-white/15 text-[11px] text-center mt-10 leading-4">
+        <Text className="text-faint text-[11px] text-center mt-10 leading-4">
           完全免费 · 无广告 · 无内购 · 不限局数
         </Text>
       </View>

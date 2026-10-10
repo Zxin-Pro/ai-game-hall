@@ -54,10 +54,10 @@ export default function GameHall() {
   useEffect(() => { void load(); }, [load]);
 
   return (
-    <View className="flex-1 bg-ink-950" style={{ paddingTop: insets.top }}>
+    <View className="flex-1 bg-page" style={{ paddingTop: insets.top }}>
       <View className="px-5 pt-3 pb-4">
-        <Text className="text-white text-[26px] font-bold">游戏厅</Text>
-        <Text className="text-white/35 text-[12px] mt-1">
+        <Text className="text-body text-[26px] font-bold">游戏厅</Text>
+        <Text className="text-sub text-[12px] mt-1">
           {offline
             ? '一群 AI 围一桌，你负责看戏'
             : stats ? `已经开了 ${stats.rooms} 局 · ${stats.messages} 条发言` : '一群 AI 围一桌，你负责看戏'}
@@ -65,9 +65,9 @@ export default function GameHall() {
       </View>
 
       {offline && (
-        <View className="mx-4 mb-3 bg-warm/10 border border-warm/30 rounded-2xl px-4 py-3">
+        <View className="mx-4 mb-3 bg-warmsoft border border-warmline rounded-2xl px-4 py-3">
           <Text className="text-warm text-[12px] font-semibold">离线演示模式</Text>
-          <Text className="text-white/45 text-[11px] mt-1 leading-4">
+          <Text className="text-sub text-[11px] mt-1 leading-4">
             没连上后端，下面是内置的七个游戏。可以看玩法、角色和规则；进房间会播放一段演示对局。
           </Text>
         </View>
@@ -88,10 +88,10 @@ export default function GameHall() {
           }
         >
           {!!error && (
-            <View className="bg-danger/15 rounded-2xl px-4 py-3 mb-3">
+            <View className="bg-dangersoft rounded-2xl px-4 py-3 mb-3">
               <Text className="text-danger text-[13px]">{error}</Text>
               <Pressable onPress={() => void load()} className="mt-2">
-                <Text className="text-white/70 text-[12px] underline">重试</Text>
+                <Text className="text-body text-[12px] underline">重试</Text>
               </Pressable>
             </View>
           )}
@@ -102,7 +102,7 @@ export default function GameHall() {
               <Pressable
                 key={g.id}
                 onPress={() => { haptic.light(); router.push(`/game/${g.id}`); }}
-                className="bg-ink-900 rounded-3xl p-4 mb-3 border border-white/5 active:opacity-80"
+                className="bg-panel rounded-3xl p-4 mb-3 border border-line active:opacity-80"
               >
                 <View className="flex-row items-start">
                   <View
@@ -114,19 +114,19 @@ export default function GameHall() {
 
                   <View className="flex-1 ml-3">
                     <View className="flex-row items-center">
-                      <Text className="text-white text-[16px] font-semibold">{g.name}</Text>
+                      <Text className="text-body text-[16px] font-semibold">{g.name}</Text>
                       <View className="ml-2 px-1.5 py-[1px] rounded" style={{ backgroundColor: `${color}22` }}>
                         <Text style={{ color, fontSize: 9, fontWeight: '700' }}>
                           {ENGINE_LABEL[g.engineType] ?? g.engineType}
                         </Text>
                       </View>
                     </View>
-                    <Text className="text-white/45 text-[12px] mt-1 leading-4" numberOfLines={2}>
+                    <Text className="text-sub text-[12px] mt-1 leading-4" numberOfLines={2}>
                       {g.description}
                     </Text>
 
                     <View className="flex-row items-center mt-3">
-                      <Text className="text-white/30 text-[11px]">
+                      <Text className="text-faint text-[11px]">
                         {g.minPlayers}-{g.maxPlayers} 人 · 最多 {g.roundLimit} 轮
                       </Text>
                       <View className="flex-1" />
@@ -135,7 +135,7 @@ export default function GameHall() {
                           <Image
                             key={r.key}
                             source={{ uri: r.avatar || `https://api.dicebear.com/7.x/bottts/png?seed=${encodeURIComponent(g.id + r.key)}` }}
-                            className="w-5 h-5 rounded-full bg-ink-700"
+                            className="w-5 h-5 rounded-full bg-soft"
                             style={{ marginLeft: i === 0 ? 0 : -6 }}
                           />
                         ))}
@@ -149,12 +149,12 @@ export default function GameHall() {
 
           {!games.length && !error && (
             <View className="items-center mt-16">
-              <Text className="text-white/30 text-[13px]">还没有游戏配置</Text>
-              <Text className="text-white/20 text-[11px] mt-2">后端跑一次 npm run seed:games 就有了</Text>
+              <Text className="text-faint text-[13px]">还没有游戏配置</Text>
+              <Text className="text-faint text-[11px] mt-2">后端跑一次 npm run seed:games 就有了</Text>
             </View>
           )}
 
-          <Text className="text-white/15 text-[10px] text-center mt-6 leading-4">
+          <Text className="text-faint text-[10px] text-center mt-6 leading-4">
             完全免费 · 无广告 · 无内购 · 不限局数{'\n'}所有 AI 发言由模型生成，内容分级 12+
           </Text>
         </ScrollView>

@@ -43,24 +43,24 @@ const SECTIONS: { h: string; p: string[] }[] = [
 export default function Terms() {
   const insets = useSafeAreaInsets();
   return (
-    <View className="flex-1 bg-ink-950" style={{ paddingTop: insets.top }}>
+    <View className="flex-1 bg-page" style={{ paddingTop: insets.top }}>
       <View className="flex-row items-center px-4 pt-2 pb-3">
         <Pressable onPress={() => router.back()} hitSlop={10}>
-          <Text className="text-white/50 text-[14px]">‹ 返回</Text>
+          <Text className="text-sub text-[14px]">‹ 返回</Text>
         </Pressable>
-        <Text className="text-white text-[16px] font-semibold flex-1 text-center">用户协议</Text>
+        <Text className="text-body text-[16px] font-semibold flex-1 text-center">用户协议</Text>
         <View className="w-[40px]" />
       </View>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }}>
         {SECTIONS.map((s) => (
           <View key={s.h} className="mb-6">
-            <Text className="text-white/85 text-[15px] font-semibold mb-2">{s.h}</Text>
+            <Text className="text-body text-[15px] font-semibold mb-2">{s.h}</Text>
             {s.p.map((t, i) => (
-              <Text key={i} className="text-white/50 text-[13px] leading-5 mb-2">{t}</Text>
+              <Text key={i} className="text-sub text-[13px] leading-5 mb-2">{t}</Text>
             ))}
           </View>
         ))}
-        <Text className="text-white/20 text-[11px] mt-4">最后更新：2026-10</Text>
+        <Text className="text-faint text-[11px] mt-4">最后更新：2026-10</Text>
       </ScrollView>
     </View>
   );

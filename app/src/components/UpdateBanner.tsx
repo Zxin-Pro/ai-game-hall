@@ -16,24 +16,24 @@ export function UpdateBanner() {
   };
 
   return (
-    <Pressable onPress={go} className="bg-ink-800 px-4 py-2.5 border-b border-white/10">
+    <Pressable onPress={go} className="bg-card px-4 py-2.5 border-b border-line">
       <View className="flex-row items-center">
         <View className="flex-1">
-          <Text className="text-white text-[13px] font-medium">
+          <Text className="text-body text-[13px] font-medium">
             有新版本 {info.versionName}
           </Text>
-          <Text className="text-white/45 text-[11.5px] mt-0.5" numberOfLines={2}>
+          <Text className="text-sub text-[11.5px] mt-0.5" numberOfLines={2}>
             {info.note || '修了些问题 建议更新'}
           </Text>
         </View>
-        <View className="bg-lamp rounded-full px-3 py-1.5">
-          <Text className="text-ink-950 text-[12px] font-semibold">
+        <View className="bg-accent rounded-full px-3 py-1.5">
+          <Text className="text-onaccent text-[12px] font-semibold">
             {info.apkUrl ? '去更新' : '待发布'}
           </Text>
         </View>
         {!force ? (
           <Pressable onPress={dismiss} hitSlop={10} className="ml-3">
-            <Text className="text-white/40 text-[16px]">×</Text>
+            <Text className="text-sub text-[16px]">×</Text>
           </Pressable>
         ) : null}
       </View>

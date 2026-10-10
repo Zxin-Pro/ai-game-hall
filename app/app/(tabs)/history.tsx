@@ -26,10 +26,10 @@ export default function History() {
   useFocusEffect(useCallback(() => { void load(); }, [load]));
 
   return (
-    <View className="flex-1 bg-ink-950" style={{ paddingTop: insets.top }}>
+    <View className="flex-1 bg-page" style={{ paddingTop: insets.top }}>
       <View className="px-5 pt-3 pb-4">
-        <Text className="text-white text-[26px] font-bold">战绩</Text>
-        <Text className="text-white/35 text-[12px] mt-1">
+        <Text className="text-body text-[26px] font-bold">战绩</Text>
+        <Text className="text-sub text-[12px] mt-1">
           {items.length ? `${items.length} 局记录，点开看复盘` : '打完的局都会留在这里'}
         </Text>
       </View>
@@ -48,34 +48,34 @@ export default function History() {
               <Pressable
                 key={h.id}
                 onPress={() => { haptic.light(); router.push(`/room/${h.id}/result`); }}
-                className="bg-ink-900 rounded-3xl p-4 mb-3 border border-white/5 active:opacity-80"
+                className="bg-panel rounded-3xl p-4 mb-3 border border-line active:opacity-80"
               >
                 <View className="flex-row items-center">
-                  <Text className="text-white text-[15px] font-semibold flex-1" numberOfLines={1}>
+                  <Text className="text-body text-[15px] font-semibold flex-1" numberOfLines={1}>
                     {h.game_name}
                   </Text>
-                  <Text className="text-white/25 text-[11px]">
+                  <Text className="text-faint text-[11px]">
                     {h.finished_at ? timeAgo(h.finished_at) : ''}
                   </Text>
                 </View>
 
-                <Text className="text-lamp text-[13px] mt-2 font-semibold" numberOfLines={1}>{won}</Text>
+                <Text className="text-accenttext text-[13px] mt-2 font-semibold" numberOfLines={1}>{won}</Text>
 
                 {!!card?.highlights?.[0] && (
-                  <Text className="text-white/45 text-[12px] mt-1.5 leading-4" numberOfLines={2}>
+                  <Text className="text-sub text-[12px] mt-1.5 leading-4" numberOfLines={2}>
                     {card.highlights[0]}
                   </Text>
                 )}
 
                 <View className="flex-row mt-3">
-                  <Text className="text-white/25 text-[11px]">第 {h.round} 轮</Text>
+                  <Text className="text-faint text-[11px]">第 {h.round} 轮</Text>
                   {!!card?.stats?.length && (
-                    <Text className="text-white/25 text-[11px] ml-3" numberOfLines={1}>
+                    <Text className="text-faint text-[11px] ml-3" numberOfLines={1}>
                       {card.stats.slice(0, 2).map((s) => `${s.label} ${s.value}`).join(' · ')}
                     </Text>
                   )}
                   <View className="flex-1" />
-                  <Text className="text-lamp/70 text-[11px]">看复盘 ›</Text>
+                  <Text className="text-accenttext text-[11px]">看复盘 ›</Text>
                 </View>
               </Pressable>
             );
@@ -83,8 +83,8 @@ export default function History() {
 
           {!items.length && (
             <View className="items-center mt-20">
-              <Text className="text-white/30 text-[13px]">还没有战绩</Text>
-              <Text className="text-white/20 text-[11px] mt-2">先去打一局吧</Text>
+              <Text className="text-faint text-[13px]">还没有战绩</Text>
+              <Text className="text-faint text-[11px] mt-2">先去打一局吧</Text>
             </View>
           )}
         </ScrollView>
