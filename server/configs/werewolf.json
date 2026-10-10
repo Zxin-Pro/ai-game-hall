@@ -51,7 +51,14 @@
       "name": "夜晚",
       "mode": "parallel",
       "actors": "all",
-      "allowActions": ["kill", "investigate", "save", "poison", "guard", "pass"],
+      "allowActions": [
+        "kill",
+        "investigate",
+        "save",
+        "poison",
+        "guard",
+        "pass"
+      ],
       "secret": true,
       "narration": "第 {round} 夜，天黑请闭眼"
     },
@@ -66,7 +73,9 @@
       "name": "发言",
       "mode": "sequential",
       "actors": "alive",
-      "allowActions": ["speak"],
+      "allowActions": [
+        "speak"
+      ],
       "speaksPerActor": 1
     },
     {
@@ -74,7 +83,10 @@
       "name": "投票",
       "mode": "vote",
       "actors": "alive",
-      "allowActions": ["vote", "pass"],
+      "allowActions": [
+        "vote",
+        "pass"
+      ],
       "narration": "投票开始，请所有人投出你怀疑的人"
     },
     {
@@ -96,7 +108,7 @@
       "knowledge": "你知道队友是谁，你知道昨晚刀了谁",
       "taboo": "绝不能在发言里露出对夜晚信息的任何了解",
       "speakingStyle": "先说结论再给理由，语气笃定，时不时甩一句反问",
-      "model": "deepseek-chat",
+      "model": "gpt-6.1-sol",
       "avatar": ""
     },
     {
@@ -111,7 +123,7 @@
       "knowledge": "你手里有查验记录，这是你最大的武器",
       "taboo": "不要第一天就跳，除非已经有狼出局或者你快被投了",
       "speakingStyle": "喜欢用「我这里有个信息」开头，条理清楚",
-      "model": "qwen-plus",
+      "model": "gpt-6-astra",
       "avatar": ""
     },
     {
@@ -126,7 +138,7 @@
       "knowledge": "你知道药还剩几瓶，但不知道今晚谁会被刀",
       "taboo": "不要暴露自己用药的状态，否则会被狼锁定",
       "speakingStyle": "话少，喜欢用短句，常常说「再听听」",
-      "model": "gemini-flash",
+      "model": "gpt-5.5",
       "avatar": ""
     },
     {
@@ -141,7 +153,7 @@
       "knowledge": "你没有夜晚信息，只能靠听",
       "taboo": "不要整天喊自己是猎人，狼会留你到最后",
       "speakingStyle": "语气冲，喜欢排队点和点名",
-      "model": "deepseek-chat",
+      "model": "gpt-6.1-sol",
       "avatar": ""
     },
     {
@@ -156,7 +168,7 @@
       "knowledge": "你什么都不知道，只有公共信息",
       "taboo": "不要为了装聪明乱跳身份",
       "speakingStyle": "先说自己的判断，再说理由，喜欢复盘上一轮的票型",
-      "model": "gpt-4o-mini",
+      "model": "gpt-6.1-sol",
       "avatar": ""
     }
   ],
@@ -172,37 +184,74 @@
         "label": "发言",
         "kind": "text",
         "placeholder": "说点什么，AI 都会听到",
-        "when": { "phase": ["speak", "day"] }
+        "when": {
+          "phase": [
+            "speak",
+            "day"
+          ]
+        }
       },
       {
         "key": "vote",
         "label": "投票",
         "kind": "pick_player",
-        "when": { "phase": ["vote"] }
+        "when": {
+          "phase": [
+            "vote"
+          ]
+        }
       },
       {
         "key": "kill",
         "label": "刀人",
         "kind": "pick_player",
-        "when": { "phase": ["night"], "onlyRole": ["wolf"] }
+        "when": {
+          "phase": [
+            "night"
+          ],
+          "onlyRole": [
+            "wolf"
+          ]
+        }
       },
       {
         "key": "investigate",
         "label": "查验",
         "kind": "pick_player",
-        "when": { "phase": ["night"], "onlyRole": ["seer"] }
+        "when": {
+          "phase": [
+            "night"
+          ],
+          "onlyRole": [
+            "seer"
+          ]
+        }
       },
       {
         "key": "save",
         "label": "用解药",
         "kind": "instant",
-        "when": { "phase": ["night"], "onlyRole": ["witch"] }
+        "when": {
+          "phase": [
+            "night"
+          ],
+          "onlyRole": [
+            "witch"
+          ]
+        }
       },
       {
         "key": "poison",
         "label": "用毒药",
         "kind": "pick_player",
-        "when": { "phase": ["night"], "onlyRole": ["witch"] }
+        "when": {
+          "phase": [
+            "night"
+          ],
+          "onlyRole": [
+            "witch"
+          ]
+        }
       }
     ]
   }

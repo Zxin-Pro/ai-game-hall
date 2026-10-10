@@ -174,3 +174,11 @@ CREATE TABLE IF NOT EXISTS user_memories (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS user_memories_user_idx ON user_memories (user_id, game_id);
+
+
+-- ============ 运行期可热更新的配置（管理后台改这里） ============
+CREATE TABLE IF NOT EXISTS app_settings (
+  key        text PRIMARY KEY,
+  value      text NOT NULL DEFAULT '',
+  updated_at timestamptz NOT NULL DEFAULT now()
+);

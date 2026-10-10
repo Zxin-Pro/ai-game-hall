@@ -1,4 +1,4 @@
-import { env, models } from '../env.js';
+import { env, getModels } from '../env.js';
 import { callLLM, callOnce, type ChatMessage } from './client.js';
 
 /* ------------------------------------------------------------------ */
@@ -18,7 +18,7 @@ export async function judgePhase(payload: {
   model?: string;
 }): Promise<Record<string, unknown>> {
   const res = await callLLM({
-    model: payload.model || models.judge || models.speak,
+    model: payload.model || getModels().judge || getModels().speak,
     purpose: 'judge',
     temperature: 0.2,
     maxTokens: 400,
@@ -56,7 +56,7 @@ export async function polishSummary(payload: {
 }): Promise<{ review: string[]; mvpReason?: string } | null> {
   try {
     const res = await callOnce({
-      model: payload.model || models.summary || models.speak,
+      model: payload.model || getModels().summary || getModels().speak,
       purpose: 'summary',
       temperature: 0.7,
       maxTokens: 400,
@@ -111,7 +111,7 @@ export async function moderate(text: string): Promise<ModerationResult> {
   if (!hit) return { ok: true };
   try {
     const res = await callOnce({
-      model: models.judge || models.speak,
+      model: getModels().judge || getModels().speak,
       purpose: 'other',
       temperature: 0,
       maxTokens: 60,
@@ -138,7 +138,7 @@ export async function extractMemories(payload: {
 }): Promise<{ key: string; value: string }[]> {
   try {
     const res = await callOnce({
-      model: payload.model || models.summary || models.speak,
+      model: payload.model || getModels().summary || getModels().speak,
       purpose: 'summary',
       temperature: 0.3,
       maxTokens: 300,

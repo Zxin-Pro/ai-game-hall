@@ -19,10 +19,19 @@ import { getRoomManager } from './services/roomManager.js';
 import { installUsageSink } from './services/usage.js';
 import { roomStore } from './services/roomStore.js';
 import { seedGames } from './gameconfig/seed.js';
+import { loadSettingsIntoMemory } from './services/settings.js';
+import adminRoutes from './routes/admin.js';
 
 export async function buildServer() {
   const app = Fastify({
-    logger,
+    // Fastify v5 不再接受 pino 实例；给它配置对象，让它自己造 logger。
+    // 非生产环境再开 pino-pretty。
+    logger: {
+      level: env.NODE_ENV === 'production' ? 'info' : 'debug',
+      ...(env.NODE_ENV === 'production'
+        ? {}
+        : { transport: { target: 'pino-pretty', options: { colorize: true, translateTime: 'HH:MM:ss' } } }),
+    },
     trustProxy: true,
     bodyLimit: 2 * 1024 * 1024,
   });
@@ -63,12 +72,17 @@ export async function buildServer() {
   await app.register(async (i) => { await i.register(roomRoutes); }, { prefix: '/api' });
   await app.register(async (i) => { await i.register(meRoutes); }, { prefix: '/api' });
   await app.register(async (i) => { await i.register(uploadRoutes); }, { prefix: '/api' });
+  // 管理后台专用接口：用独立的管理员密钥鉴权，不跟普通用户混
+  await app.register(async (i) => { await i.register(adminRoutes); }, { prefix: '/api/admin' });
 
   return app;
 }
 
 async function main() {
   await migrate();
+  // ★ 先把数据库里存的运行期配置加载进来，再起引擎 ——
+  //   否则第一局会用到 .env 里的旧模型名
+  await loadSettingsIntoMemory();
   await seedGames();
   installUsageSink();
 

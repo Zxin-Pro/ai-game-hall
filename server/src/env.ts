@@ -49,23 +49,100 @@ if (!parsed.success) {
   process.exit(1);
 }
 
+/** 启动时的基础配置（来自 .env / 环境变量），运行期不可变 */
 export const env = parsed.data;
 
-export const models = {
-  list: env.MODEL_LIST.split(',').map((s) => s.trim()).filter(Boolean),
-  speak: env.DEFAULT_SPEAK_MODEL,
-  judge: env.DEFAULT_JUDGE_MODEL,
-  summary: env.DEFAULT_SUMMARY_MODEL,
+// ============================================================================
+//  运行期可覆盖的配置
+//  ---------------------------------------------------------------------------
+//  管理后台改的 API 配置写进数据库，进程里靠这份内存覆盖层生效，
+//  不用重启容器。改完调 applySettings() 立刻热更新。
+// ============================================================================
+
+/** 可热更新的字段白名单 —— 只有这些字段允许被数据库覆盖 */
+export const HOT_KEYS = [
+  'MODEL_PROVIDER_URL',
+  'MODEL_PROVIDER_KEY',
+  'MODEL_LIST',
+  'DEFAULT_SPEAK_MODEL',
+  'DEFAULT_JUDGE_MODEL',
+  'DEFAULT_SUMMARY_MODEL',
+  'FALLBACK_PROVIDER_URL',
+  'FALLBACK_PROVIDER_KEY',
+  'MAX_OUTPUT_TOKENS',
+  'LLM_TIMEOUT_MS',
+  'LLM_RETRY',
+  'CONTEXT_MESSAGE_WINDOW',
+  'DAILY_TOKEN_BUDGET_K',
+  'INVITE_CODES',
+] as const;
+
+export type HotKey = (typeof HOT_KEYS)[number];
+
+/** 内存覆盖层：键 -> 值。启动后用数据库里的值填充 */
+const overrides = new Map<string, string>();
+
+export function setOverrides(next: Record<string, string | undefined>) {
+  overrides.clear();
+  for (const k of HOT_KEYS) {
+    const v = next[k];
+    if (v !== undefined && v !== null && String(v) !== '') overrides.set(k, String(v));
+  }
+  recompute();
+}
+
+export function currentOverrides(): Record<string, string> {
+  return Object.fromEntries(overrides);
+}
+
+/**
+ * 读配置：优先内存覆盖 → 再退回 .env 基础值
+ */
+export function cfg(key: HotKey): string {
+  const v = overrides.get(key);
+  if (v !== undefined) return v;
+  return String((env as unknown as Record<string, unknown>)[key] ?? '');
+}
+
+export function cfgNum(key: HotKey, fallback: number): number {
+  const n = Number(cfg(key));
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
+// ---- 派生对象：随覆盖层变化而重建 -----------------------------------------
+// 用函数导出，调用方每次拿到的都是最新的（导出 let 会被解构固化）
+
+const _derived = {
+  models: { list: [] as string[], speak: '', judge: '', summary: '' },
+  inviteCodes: [] as string[],
+  providerChain: [] as { name: string; baseUrl: string; apiKey: string }[],
 };
 
-export const inviteCodes = env.INVITE_CODES.split(',').map((s) => s.trim()).filter(Boolean);
+function recompute() {
+  _derived.models = {
+    list: cfg('MODEL_LIST').split(',').map((s) => s.trim()).filter(Boolean),
+    speak: cfg('DEFAULT_SPEAK_MODEL'),
+    judge: cfg('DEFAULT_JUDGE_MODEL'),
+    summary: cfg('DEFAULT_SUMMARY_MODEL'),
+  };
+  _derived.inviteCodes = cfg('INVITE_CODES').split(',').map((s) => s.trim()).filter(Boolean);
+  _derived.providerChain = [
+    { name: 'primary', baseUrl: cfg('MODEL_PROVIDER_URL'), apiKey: cfg('MODEL_PROVIDER_KEY') },
+    ...(cfg('FALLBACK_PROVIDER_URL')
+      ? [{ name: 'fallback', baseUrl: cfg('FALLBACK_PROVIDER_URL'), apiKey: cfg('FALLBACK_PROVIDER_KEY') }]
+      : []),
+  ];
+}
 
-/** 主供应商 + 备用供应商，按顺序尝试 */
-export const providers = [
-  { name: 'primary', baseUrl: env.MODEL_PROVIDER_URL, apiKey: env.MODEL_PROVIDER_KEY },
-  ...(env.FALLBACK_PROVIDER_URL
-    ? [{ name: 'fallback', baseUrl: env.FALLBACK_PROVIDER_URL, apiKey: env.FALLBACK_PROVIDER_KEY }]
-    : []),
-];
+// 启动先算一遍（此时还没有覆盖层，等于用 .env 的值）
+recompute();
 
-export { providers as providerChain };
+export function getModels() {
+  return _derived.models;
+}
+export function getInviteCodes() {
+  return _derived.inviteCodes;
+}
+export function getProviderChain() {
+  return _derived.providerChain;
+}

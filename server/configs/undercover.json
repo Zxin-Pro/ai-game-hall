@@ -26,22 +26,70 @@
   ],
   "data": {
     "wordPairs": [
-      { "civilian": "可乐", "undercover": "雪碧" },
-      { "civilian": "牙膏", "undercover": "洗面奶" },
-      { "civilian": "汉堡", "undercover": "三明治" },
-      { "civilian": "口红", "undercover": "唇膏" },
-      { "civilian": "咖啡", "undercover": "奶茶" },
-      { "civilian": "空调", "undercover": "电风扇" },
-      { "civilian": "快递", "undercover": "外卖" },
-      { "civilian": "眼镜", "undercover": "墨镜" },
-      { "civilian": "拖鞋", "undercover": "凉鞋" },
-      { "civilian": "饼干", "undercover": "薯片" },
-      { "civilian": "篮球", "undercover": "排球" },
-      { "civilian": "泡面", "undercover": "螺蛳粉" },
-      { "civilian": "沙发", "undercover": "懒人椅" },
-      { "civilian": "演唱会", "undercover": "音乐节" },
-      { "civilian": "打车", "undercover": "坐地铁" },
-      { "civilian": "闹钟", "undercover": "日历" }
+      {
+        "civilian": "可乐",
+        "undercover": "雪碧"
+      },
+      {
+        "civilian": "牙膏",
+        "undercover": "洗面奶"
+      },
+      {
+        "civilian": "汉堡",
+        "undercover": "三明治"
+      },
+      {
+        "civilian": "口红",
+        "undercover": "唇膏"
+      },
+      {
+        "civilian": "咖啡",
+        "undercover": "奶茶"
+      },
+      {
+        "civilian": "空调",
+        "undercover": "电风扇"
+      },
+      {
+        "civilian": "快递",
+        "undercover": "外卖"
+      },
+      {
+        "civilian": "眼镜",
+        "undercover": "墨镜"
+      },
+      {
+        "civilian": "拖鞋",
+        "undercover": "凉鞋"
+      },
+      {
+        "civilian": "饼干",
+        "undercover": "薯片"
+      },
+      {
+        "civilian": "篮球",
+        "undercover": "排球"
+      },
+      {
+        "civilian": "泡面",
+        "undercover": "螺蛳粉"
+      },
+      {
+        "civilian": "沙发",
+        "undercover": "懒人椅"
+      },
+      {
+        "civilian": "演唱会",
+        "undercover": "音乐节"
+      },
+      {
+        "civilian": "打车",
+        "undercover": "坐地铁"
+      },
+      {
+        "civilian": "闹钟",
+        "undercover": "日历"
+      }
     ],
     "actionGrammar": {
       "describe": "用一句话描述你的词，text 填描述内容，绝不能说词本身",
@@ -70,7 +118,9 @@
       "name": "轮流描述",
       "mode": "sequential",
       "actors": "alive",
-      "allowActions": ["describe"],
+      "allowActions": [
+        "describe"
+      ],
       "speaksPerActor": 1,
       "narration": "从 1 号开始，每人一句话描述自己的词"
     },
@@ -79,7 +129,10 @@
       "name": "投票",
       "mode": "vote",
       "actors": "alive",
-      "allowActions": ["vote", "pass"],
+      "allowActions": [
+        "vote",
+        "pass"
+      ],
       "narration": "现在投票，投出你觉得最像卧底的人"
     },
     {
@@ -101,7 +154,7 @@
       "knowledge": "你只知道自己这个词，不知道别人拿到什么",
       "taboo": "绝不能直接说出你的词",
       "speakingStyle": "描述偏具体，喜欢说使用场景，比如「我夏天几乎天天离不开」",
-      "model": "deepseek-chat",
+      "model": "gpt-6.1-sol",
       "avatar": ""
     },
     {
@@ -116,7 +169,7 @@
       "knowledge": "你知道自己的词和平民的不一样，但不知道具体差在哪",
       "taboo": "不要过早说得太具体，也别和任何人的描述完全重合",
       "speakingStyle": "描述偏模糊，多用「就是那个嘛」「你们懂的吧」这类词兜底",
-      "model": "qwen-plus",
+      "model": "gpt-6-astra",
       "avatar": ""
     },
     {
@@ -131,7 +184,7 @@
       "knowledge": "你什么都不知道，必须靠听",
       "taboo": "不要第一个发言，不要描述得太笼统",
       "speakingStyle": "发言短，喜欢复述别人的关键词来混过去",
-      "model": "gemini-flash",
+      "model": "gpt-5.5",
       "avatar": ""
     }
   ],
@@ -147,20 +200,33 @@
         "label": "描述",
         "kind": "text",
         "placeholder": "一句话描述你的词",
-        "when": { "phase": ["describe"] }
+        "when": {
+          "phase": [
+            "describe"
+          ]
+        }
       },
       {
         "key": "speak",
         "label": "插话",
         "kind": "text",
         "placeholder": "说点什么，别说出词本身",
-        "when": { "phase": ["deal", "verdict"] }
+        "when": {
+          "phase": [
+            "deal",
+            "verdict"
+          ]
+        }
       },
       {
         "key": "vote",
         "label": "投票",
         "kind": "pick_player",
-        "when": { "phase": ["vote"] }
+        "when": {
+          "phase": [
+            "vote"
+          ]
+        }
       }
     ]
   }

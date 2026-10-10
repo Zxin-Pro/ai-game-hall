@@ -4,7 +4,7 @@ import { eq, or } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import { users } from '../db/schema.js';
 import { hashPassword, checkPassword } from '../plugins/auth.js';
-import { inviteCodes } from '../env.js';
+import { getInviteCodes } from '../env.js';
 import { logger } from '../logger.js';
 
 /* ------------------------------------------------------------------ */
@@ -31,7 +31,8 @@ export default async function authRoutes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: '参数不合法', detail: parsed.error.flatten() });
     const { nickname, password, inviteCode, deviceFingerprint, avatar } = parsed.data;
 
-    if (inviteCodes.length && (!inviteCode || !inviteCodes.includes(inviteCode))) {
+    const codes = getInviteCodes();
+    if (codes.length && (!inviteCode || !codes.includes(inviteCode))) {
       return reply.code(403).send({ error: '邀请码无效' });
     }
 

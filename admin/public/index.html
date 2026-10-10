@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI 游戏厅 · 管理台</title>
+<style>
+:root{
+  --bg:#0d0b14; --panel:#161322; --panel2:#1d1930; --line:#2a2440;
+  --txt:#e9e6f5; --dim:#8f87ab; --acc:#9b8cff; --acc2:#ffc46b;
+  --ok:#5fd39a; --warn:#ffc46b; --err:#ff7a8a;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--txt);font:14px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--acc);text-decoration:none}
+button{
+  font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel2);
+  color:var(--txt);padding:7px 14px;border-radius:8px;transition:.15s;
+}
+button:hover{border-color:var(--acc);color:#fff}
+button.primary{background:var(--acc);border-color:var(--acc);color:#14101f;font-weight:600}
+button.primary:hover{filter:brightness(1.1)}
+button.danger{border-color:#5c2a35;color:var(--err)}
+button.danger:hover{border-color:var(--err);background:#2a1620}
+button:disabled{opacity:.45;cursor:not-allowed}
+input,textarea,select{
+  font:inherit;background:#100e1a;border:1px solid var(--line);color:var(--txt);
+  padding:8px 11px;border-radius:8px;width:100%;outline:none;
+}
+input:focus,textarea:focus{border-color:var(--acc)}
+textarea{resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.55}
+
+/* 登录 */
+#login{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+#login .box{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);
+  border-radius:16px;padding:28px}
+#login h1{font-size:19px;margin-bottom:4px}
+#login p{color:var(--dim);font-size:12.5px;margin-bottom:20px}
+#login .field{margin-bottom:12px}
+#login label{display:block;font-size:12px;color:var(--dim);margin-bottom:5px}
+
+/* 布局 */
+#app{display:none;min-height:100vh}
+header{
+  display:flex;align-items:center;gap:16px;padding:0 20px;height:56px;
+  background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;
+}
+header .brand{font-weight:600;letter-spacing:.3px}
+header .brand span{color:var(--acc)}
+header nav{display:flex;gap:4px;flex:1;overflow-x:auto}
+header nav button{border:none;background:none;color:var(--dim);padding:8px 12px;border-radius:8px;white-space:nowrap}
+header nav button.on{background:var(--panel2);color:var(--txt)}
+header .be{font-size:12px;color:var(--dim);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--err);display:inline-block}
+.dot.on{background:var(--ok)}
+
+main{padding:20px;max-width:1400px;margin:0 auto}
+.view{display:none}
+.view.on{display:block}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.card .k{font-size:11.5px;color:var(--dim);margin-bottom:6px;letter-spacing:.3px}
+.card .v{font-size:23px;font-weight:600;font-variant-numeric:tabular-nums}
+.card .s{font-size:11.5px;color:var(--dim);margin-top:3px}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  padding:16px;margin-bottom:16px;overflow:hidden}
+.panel h2{font-size:14.5px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.panel h2 .sub{font-size:11.5px;color:var(--dim);font-weight:400}
+.panel h2 .right{margin-left:auto;display:flex;gap:8px}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-weight:500;color:var(--dim);font-size:11.5px;
+  padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px 10px;border-bottom:1px solid #201c33;vertical-align:top}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#1a1628}
+.tw{overflow-x:auto;margin:0 -16px;padding:0 16px}
+
+.tag{display:inline-block;padding:1px 8px;border-radius:20px;font-size:11px;
+  background:var(--panel2);color:var(--dim);border:1px solid var(--line);white-space:nowrap}
+.tag.run{color:var(--ok);border-color:#26543f}
+.tag.end{color:var(--dim)}
+.tag.wait{color:var(--warn);border-color:#4d3c1e}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+.dim{color:var(--dim)}
+.num{font-variant-numeric:tabular-nums}
+.trunc{max-width:420px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.bar{height:8px;border-radius:4px;background:var(--panel2);overflow:hidden;display:flex}
+.bar i{display:block;height:100%}
+
+.chat{max-height:560px;overflow-y:auto;background:#100e1a;border:1px solid var(--line);
+  border-radius:10px;padding:12px}
+.msg{margin-bottom:11px;line-height:1.65}
+.msg .who{font-size:11.5px;color:var(--acc);margin-bottom:2px}
+.msg.sys .who{color:var(--dim)}
+.msg.sys .body{color:var(--dim);font-style:italic}
+.msg .body{white-space:pre-wrap;word-break:break-word}
+.msg .meta{font-size:10.5px;color:#5f5878;margin-top:3px;font-family:ui-monospace,monospace}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+  background:var(--panel2);border:1px solid var(--acc);color:var(--txt);
+  padding:10px 18px;border-radius:10px;font-size:13px;z-index:99;
+  opacity:0;transition:.25s;pointer-events:none;max-width:80vw}
+.toast.on{opacity:1}
+.toast.err{border-color:var(--err)}
+
+.empty{color:var(--dim);text-align:center;padding:28px;font-size:13px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.row{display:flex;gap:8px;align-items:center}
+.row.wrap{flex-wrap:wrap}
+.spacer{flex:1}
+pre.json{background:#100e1a;border:1px solid var(--line);border-radius:10px;padding:12px;
+  overflow:auto;max-height:520px;font-size:12px;font-family:ui-monospace,Menlo,Consolas,monospace}
+details{margin-top:10px}
+summary{cursor:pointer;color:var(--dim);font-size:12.5px;padding:4px 0}
+summary:hover{color:var(--acc)}
+@media(max-width:640px){
+  main{padding:14px}
+  header{padding:0 12px;gap:10px}
+  header .be{display:none}
+  .card .v{font-size:19px}
+}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="box">
+    <h1>AI 游戏厅 · 管理台</h1>
+    <p>换个入口进去看后台</p>
+    <div class="field">
+      <label>账号</label>
+      <input id="lu" autocomplete="username" placeholder="admin">
+    </div>
+    <div class="field">
+      <label>密码</label>
+      <input id="lp" type="password" autocomplete="current-password" placeholder="••••••••">
+    </div>
+    <button class="primary" style="width:100%;margin-top:8px" onclick="doLogin()">进去</button>
+    <div id="lerr" style="color:var(--err);font-size:12.5px;margin-top:10px;min-height:18px"></div>
+  </div>
+</div>
+
+<div id="app">
+  <header>
+    <div class="brand">AI 游戏厅<span> · 管理台</span></div>
+    <nav>
+      <button data-v="dash" class="on">概览</button>
+      <button data-v="api">模型 API</button>
+      <button data-v="rooms">房间</button>
+      <button data-v="users">用户</button>
+      <button data-v="games">游戏配置</button>
+      <button data-v="usage">用量</button>
+      <button data-v="reports">举报</button>
+      <button data-v="system">系统</button>
+    </nav>
+    <div class="be"><span class="dot" id="bdot"></span><span id="btxt">检测中</span></div>
+    <button onclick="doLogout()" style="padding:6px 12px">退出</button>
+  </header>
+
+  <main>
+    <!-- 模型 API 配置 -->
+    <section class="view" id="v-api">
+      <div class="panel">
+        <h2>当前生效 <span class="sub">改完立刻生效，不用重启</span></h2>
+        <div class="cards" id="apiNow"></div>
+      </div>
+
+      <div class="grid2" style="margin-top:14px">
+        <div class="panel">
+          <h2>主供应商</h2>
+          <div class="field">
+            <label>接口地址 <span class="sub">OpenAI 兼容，结尾不要带斜杠</span></label>
+            <input id="f-url" placeholder="https://example.com/v1">
+          </div>
+          <div class="field">
+            <label>API Key <span class="sub">留空 = 不改</span></label>
+            <input id="f-key" type="password" placeholder="sk-...">
+          </div>
+          <div class="field">
+            <label>备用接口地址 <span class="sub">可不填</span></label>
+            <input id="f-furl" placeholder="https://backup.com/v1">
+          </div>
+          <div class="field">
+            <label>备用 API Key</label>
+            <input id="f-fkey" type="password" placeholder="留空 = 不改">
+          </div>
+        </div>
+
+        <div class="panel">
+          <h2>模型分配</h2>
+          <div class="field">
+            <label>发言模型 <span class="sub">角色说话用，要快</span></label>
+            <input id="f-speak" placeholder="gpt-6.1-sol">
+          </div>
+          <div class="field">
+            <label>裁判模型 <span class="sub">判定/裁决用，要聪明</span></label>
+            <input id="f-judge" placeholder="gpt-6-astra">
+          </div>
+          <div class="field">
+            <label>总结模型 <span class="sub">记忆压缩用，要便宜</span></label>
+            <input id="f-summary" placeholder="gpt-5.5">
+          </div>
+          <div class="field">
+            <label>可用模型列表 <span class="sub">逗号分隔</span></label>
+            <input id="f-list" placeholder="gpt-6.1-sol,gpt-5.5,gpt-6-astra">
+          </div>
+          <button onclick="pullUpstream()" style="margin-top:6px">拉取上游模型列表</button>
+          <div id="upstreamHint" class="sub" style="margin-top:8px"></div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <h2>运行参数</h2>
+        <div class="grid2">
+          <div class="field">
+            <label>单次最大输出 tokens</label>
+            <input id="f-maxtok" type="number" placeholder="2000">
+          </div>
+          <div class="field">
+            <label>请求超时（毫秒）</label>
+            <input id="f-timeout" type="number" placeholder="90000">
+          </div>
+          <div class="field">
+            <label>失败重试次数 <span class="sub">中转站抖就调大</span></label>
+            <input id="f-retry" type="number" placeholder="4">
+          </div>
+          <div class="field">
+            <label>上下文消息条数</label>
+            <input id="f-ctx" type="number" placeholder="20">
+          </div>
+          <div class="field">
+            <label>邀请码 <span class="sub">逗号分隔，留空 = 谁都能注册</span></label>
+            <input id="f-invite" placeholder="BETA2026">
+          </div>
+          <div class="field">
+            <label>日 token 预算（千）</label>
+            <input id="f-budget" type="number" placeholder="3000">
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <h2>自检</h2>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <input id="f-testmodel" placeholder="留空用发言模型" style="flex:1;min-width:200px">
+          <button onclick="testModel()">试打一次</button>
+          <button class="ghost" onclick="resetAll()">全部回退 .env</button>
+        </div>
+        <div id="testOut" style="margin-top:12px"></div>
+      </div>
+
+      <div style="margin-top:16px;display:flex;gap:10px">
+        <button onclick="saveApi()" style="padding:10px 22px">保存并生效</button>
+        <span class="sub" id="saveHint" style="align-self:center"></span>
+      </div>
+    </section>
+
+    <!-- 概览 -->
+    <section class="view on" id="v-dash">
+      <div class="cards" id="dashCards"></div>
+      <div class="grid2">
+        <div class="panel">
+          <h2>最近 14 天用量 <span class="sub">tokens</span></h2>
+          <div id="trend"></div>
+        </div>
+        <div class="panel">
+          <h2>模型分布 <span class="sub">近 7 天</span></h2>
+          <div id="modelDist"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>最近的房间</h2>
+        <div class="tw"><table><thead><tr>
+          <th>游戏</th><th>状态</th><th>轮次</th><th>人数</th><th>消息</th><th>创建时间</th>
+        </tr></thead><tbody id="dashRooms"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- 房间 -->
+    <section class="view" id="v-rooms">
+      <div class="panel">
+        <h2>房间
+          <span class="right">
+            <select id="roomFilter" onchange="loadRooms()" style="width:auto">
+              <option value="">全部状态</option>
+              <option value="running">进行中</option>
+              <option value="waiting">等待中</option>
+              <option value="ended">已结束</option>
+            </select>
+            <button onclick="loadRooms()">刷新</button>
+          </span>
+        </h2>
+        <div class="tw"><table><thead><tr>
+          <th>游戏</th><th>房主</th><th>状态</th><th>轮次</th><th>人数</th>
+          <th>消息</th><th>tokens</th><th>话题</th><th>创建</th><th></th>
+        </tr></thead><tbody id="roomRows"></tbody></table></div>
+      </div>
+      <div class="panel" id="roomDetail" style="display:none">
+        <h2 id="rdTitle">房间详情 <span class="right"><button onclick="closeRoom()">关闭</button></span></h2>
+        <div id="rdPlayers" style="margin-bottom:14px"></div>
+        <div class="chat" id="rdChat"></div>
+        <details><summary>原始状态快照</summary><pre class="json" id="rdState"></pre></details>
+      </div>
+    </section>
+
+    <!-- 用户 -->
+    <section class="view" id="v-users">
+      <div class="panel">
+        <h2>用户 <span class="sub" id="userCount"></span>
+          <span class="right"><button onclick="loadUsers()">刷新</button></span>
+        </h2>
+        <div class="tw"><table><thead><tr>
+          <th>昵称</th><th>ID</th><th>房间数</th><th>tokens</th><th>注册时间</th><th></th>
+        </tr></thead><tbody id="userRows"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- 游戏配置 -->
+    <section class="view" id="v-games">
+      <div class="panel">
+        <h2>游戏配置 <span class="sub">改完写回文件，主服务重启后完全生效</span></h2>
+        <div class="row wrap" id="gameTabs" style="margin-bottom:12px"></div>
+        <textarea id="cfgText" rows="26" spellcheck="false" placeholder="选一个游戏"></textarea>
+        <div class="row" style="margin-top:12px">
+          <button class="primary" onclick="saveConfig()">保存</button>
+          <button onclick="fmtConfig()">格式化</button>
+          <span class="dim" id="cfgMsg" style="font-size:12.5px"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 用量 -->
+    <section class="view" id="v-usage">
+      <div class="panel">
+        <h2>按天 <span class="sub" id="usageDays"></span>
+          <span class="right"><button onclick="loadUsage()">刷新</button></span>
+        </h2>
+        <div class="tw"><table><thead><tr>
+          <th>日期</th><th>tokens</th><th>调用次数</th><th>活跃用户</th>
+        </tr></thead><tbody id="usageRows"></tbody></table></div>
+      </div>
+      <div class="grid2">
+        <div class="panel"><h2>按用途</h2>
+          <div class="tw"><table><thead><tr><th>用途</th><th>次数</th><th>tokens</th></tr></thead>
+          <tbody id="purposeRows"></tbody></table></div></div>
+        <div class="panel"><h2>用得多的人</h2>
+          <div class="tw"><table><thead><tr><th>昵称</th><th>tokens</th><th>次数</th></tr></thead>
+          <tbody id="topUserRows"></tbody></table></div></div>
+      </div>
+    </section>
+
+    <!-- 举报 -->
+    <section class="view" id="v-reports">
+      <div class="panel">
+        <h2>举报 <span class="right"><button onclick="loadReports()">刷新</button></span></h2>
+        <div class="tw"><table><thead><tr>
+          <th>时间</th><th>举报人</th><th>原因</th><th>被举报内容</th><th>说明</th><th></th>
+        </tr></thead><tbody id="reportRows"></tbody></table></div>
+      </div>
+    </section>
+
+    <!-- 系统 -->
+    <section class="view" id="v-system">
+      <div class="panel">
+        <h2>系统状态 <span class="right"><button onclick="loadSystem()">刷新</button></span></h2>
+        <div id="sysBox"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ------------------------------ 工具 ------------------------------ */
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const n = (x) => Number(x ?? 0).toLocaleString('zh-CN');
+
+let toastTimer;
+function toast(msg, isErr) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast on' + (isErr ? ' err' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.className = 'toast'; }, 2600);
+}
+
+// 页面可能挂在子路径下（比如 /agh-admin/），所有请求都按当前基准走
+const BASE = location.pathname.replace(/\/[^/]*$/, '') || '';
+
+async function api(path, opts = {}) {
+  const r = await fetch(BASE + path, {
+    headers: { 'content-type': 'application/json' },
+    ...opts,
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
+  });
+  if (r.status === 401) { showLogin(); throw new Error('未登录'); }
+  const txt = await r.text();
+  const j = txt ? JSON.parse(txt) : {};
+  if (!r.ok) throw new Error(j.error || ('请求失败 ' + r.status));
+  return j;
+}
+
+const fmtTime = (s) => {
+  if (!s) return '—';
+  const d = new Date(s);
+  const p = (x) => String(x).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+const shortId = (s) => (s ? String(s).slice(0, 8) : '—');
+
+/* ------------------------------ 登录 ------------------------------ */
+function showLogin() { $('login').style.display = 'flex'; $('app').style.display = 'none'; }
+function showApp() {
+  $('login').style.display = 'none';
+  $('app').style.display = 'block';
+  loadDash(); pollHealth();
+  setInterval(pollHealth, 30000);
+}
+
+async function doLogin() {
+  $('lerr').textContent = '';
+  try {
+    await api('/login', { method: 'POST', body: { username: $('lu').value, password: $('lp').value } });
+    showApp();
+  } catch (e) {
+    $('lerr').textContent = e.message;
+  }
+}
+async function doLogout() {
+  await api('/logout', { method: 'POST' }).catch(() => {});
+  showLogin();
+}
+$('lp').addEventListener('keydown', (e) => { if (e.key === 'Enter') doLogin(); });
+
+/* ------------------------------ 导航 ------------------------------ */
+document.querySelectorAll('header nav button').forEach((b) => {
+  b.onclick = () => {
+    document.querySelectorAll('header nav button').forEach((x) => x.classList.remove('on'));
+    document.querySelectorAll('.view').forEach((x) => x.classList.remove('on'));
+    b.classList.add('on');
+    $('v-' + b.dataset.v).classList.add('on');
+    const loaders = { rooms: loadRooms, users: loadUsers, games: loadGames,
+      usage: loadUsage, reports: loadReports, system: loadSystem, dash: loadDash,
+      api: loadApi };
+    loaders[b.dataset.v]?.();
+  };
+});
+
+/* -------------------- 模型 API 配置 -------------------- */
+const API_FIELDS = {
+  'f-url': 'MODEL_PROVIDER_URL',
+  'f-key': 'MODEL_PROVIDER_KEY',
+  'f-furl': 'FALLBACK_PROVIDER_URL',
+  'f-fkey': 'FALLBACK_PROVIDER_KEY',
+  'f-speak': 'DEFAULT_SPEAK_MODEL',
+  'f-judge': 'DEFAULT_JUDGE_MODEL',
+  'f-summary': 'DEFAULT_SUMMARY_MODEL',
+  'f-list': 'MODEL_LIST',
+  'f-maxtok': 'MAX_OUTPUT_TOKENS',
+  'f-timeout': 'LLM_TIMEOUT_MS',
+  'f-retry': 'LLM_RETRY',
+  'f-ctx': 'CONTEXT_MESSAGE_WINDOW',
+  'f-invite': 'INVITE_CODES',
+  'f-budget': 'DAILY_TOKEN_BUDGET_K',
+};
+
+let apiSettings = [];
+
+async function loadApi() {
+  try {
+    const d = await api('/api/apiconf');
+    apiSettings = d.settings || [];
+    const eff = d.effective || {};
+
+    const byKey = {};
+    apiSettings.forEach((s) => { byKey[s.key] = s; });
+
+    // 当前生效卡片
+    $('apiNow').innerHTML = [
+      card('接口地址', eff.baseUrl || '未配置', eff.baseUrl ? '' : 'bad'),
+      card('API Key', eff.hasKey ? eff.keyMasked : '未配置', eff.hasKey ? 'good' : 'bad'),
+      card('发言模型', eff.speak || '未设置', eff.speak ? 'good' : 'bad'),
+      card('裁判模型', eff.judge || '未设置', eff.judge ? 'good' : ''),
+      card('上下文', (eff.contextWindow || '-') + ' 条', ''),
+      card('重试次数', String(eff.llmRetry ?? '-'), ''),
+      card('超时', ((eff.llmTimeoutMs || 0) / 1000) + ' 秒', ''),
+      card('可用模型', String((eff.list || []).length) + ' 个', ''),
+    ].join('');
+
+    // 填表单（密钥用掩码占位，不改就不动）
+    for (const [id, key] of Object.entries(API_FIELDS)) {
+      const el = $(id);
+      if (!el) continue;
+      const s = byKey[key];
+      if (!s) { el.value = ''; continue; }
+      el.value = s.value || '';
+      el.placeholder = s.fromDb ? '（数据库已覆盖）' : '（.env 默认值）';
+    }
+    // key 用掩码显示，让人知道「已经配了」
+    const ks = byKey['MODEL_PROVIDER_KEY'];
+    if (ks && ks.value) $('f-key').value = ks.value;
+    const fks = byKey['FALLBACK_PROVIDER_KEY'];
+    if (fks && fks.value) $('f-fkey').value = fks.value;
+
+    $('upstreamHint').textContent = '';
+    $('saveHint').textContent = '';
+  } catch (e) {
+    $('apiNow').innerHTML = card('读配置失败', String(e.message || e).slice(0, 60), 'bad');
+  }
+}
+
+function card(label, value, tone) {
+  return '<div class="card"><div class="k">' + esc(label) + '</div>' +
+    '<div class="v ' + (tone || '') + '" style="font-size:15px;word-break:break-all">' +
+    esc(String(value)) + '</div></div>';
+}
+
+async function saveApi() {
+  const patch = {};
+  for (const [id, key] of Object.entries(API_FIELDS)) {
+    const el = $(id);
+    if (!el) continue;
+    const v = el.value.trim();
+    // 密钥框里是掩码 → 用户没改，跳过
+    if ((key === 'MODEL_PROVIDER_KEY' || key === 'FALLBACK_PROVIDER_KEY') && v.includes('****')) continue;
+    // 空值也提交：允许把某项清空（比如备用接口）
+    patch[key] = v;
+  }
+  $('saveHint').textContent = '保存中…';
+  try {
+    const r = await api('/api/apiconf', { method: 'PUT', body: patch });
+    if (r.ok) {
+      $('saveHint').textContent = '已生效 ✓ 改了 ' + (r.changed || []).length + ' 项';
+      await loadApi();
+    } else {
+      $('saveHint').textContent = '失败：' + (r.error || '未知错误');
+    }
+  } catch (e) {
+    $('saveHint').textContent = '失败：' + String(e.message || e).slice(0, 80);
+  }
+}
+
+async function testModel() {
+  const m = $('f-testmodel').value.trim();
+  $('testOut').innerHTML = '<span class="sub">试打中…</span>';
+  try {
+    const r = await api('/api/apiconf/test', { method: 'POST', body: { model: m || undefined } });
+    if (r.ok) {
+      $('testOut').innerHTML =
+        '<div class="card" style="border-color:#2f6b45"><div class="k">连通正常</div>' +
+        '<div class="v good" style="font-size:14px">' + esc(r.model) + ' · ' + r.ms + 'ms · ' + (r.tokens || 0) + ' tok</div>' +
+        '<div class="sub" style="margin-top:6px">上游回复：' + esc(String(r.text || '').slice(0, 80)) + '</div></div>';
+    } else {
+      $('testOut').innerHTML =
+        '<div class="card" style="border-color:#7a3030"><div class="k">打不通</div>' +
+        '<div class="v bad" style="font-size:13px;word-break:break-all">' + esc(String(r.error || '未知')) + '</div></div>';
+    }
+  } catch (e) {
+    $('testOut').innerHTML = '<div class="card"><div class="v bad">' + esc(String(e.message || e)) + '</div></div>';
+  }
+}
+
+async function pullUpstream() {
+  $('upstreamHint').textContent = '拉取中…';
+  try {
+    const r = await api('/api/apiconf/upstream');
+    if (r.ok) {
+      const list = r.models || [];
+      $('f-list').value = list.join(',');
+      $('upstreamHint').textContent = '拉到 ' + list.length + ' 个模型，已填进列表（未保存）';
+    } else {
+      $('upstreamHint').textContent = '拉取失败：' + (r.error || r.status || '未知');
+    }
+  } catch (e) {
+    $('upstreamHint').textContent = '拉取失败：' + String(e.message || e).slice(0, 60);
+  }
+}
+
+async function resetAll() {
+  if (!confirm('把所有运行期配置回退成 .env 里的默认值？')) return;
+  const keys = ['MODEL_PROVIDER_URL', 'MODEL_PROVIDER_KEY', 'MODEL_LIST',
+    'DEFAULT_SPEAK_MODEL', 'DEFAULT_JUDGE_MODEL', 'DEFAULT_SUMMARY_MODEL',
+    'FALLBACK_PROVIDER_URL', 'FALLBACK_PROVIDER_KEY', 'MAX_OUTPUT_TOKENS',
+    'LLM_TIMEOUT_MS', 'LLM_RETRY', 'CONTEXT_MESSAGE_WINDOW',
+    'DAILY_TOKEN_BUDGET_K', 'INVITE_CODES'];
+  for (const k of keys) {
+    try { await api('/api/apiconf/' + k, { method: 'DELETE' }); } catch { /* 忽略 */ }
+  }
+  await loadApi();
+  $('saveHint').textContent = '已全部回退';
+}
+
+async function pollHealth() {  try {
+    const s = await api('/api/system');
+    const ok = s.backend?.ok;
+    $('bdot').className = 'dot' + (ok ? ' on' : '');
+    $('btxt').textContent = ok ? '后端正常' : '后端离线';
+  } catch {
+    $('bdot').className = 'dot';
+    $('btxt').textContent = '连不上';
+  }
+}
+
+/* ------------------------------ 概览 ------------------------------ */
+async function loadDash() {
+  try {
+    const d = await api('/api/overview');
+    const c = d.counts || {};
+    $('dashCards').innerHTML = [
+      ['用户', n(c.users), ''],
+      ['房间', n(c.rooms), '进行中 ' + n(c.running)],
+      ['消息', n(c.messages), ''],
+      ['近 7 天 tokens', n(d.usage?.tokens), '调用 ' + n((d.usage?.calls_ok||0)+(d.usage?.calls_fail||0))],
+      ['今日 tokens', n(d.todayTokens), ''],
+      ['失败调用', n(d.usage?.calls_fail), '近 7 天'],
+      ['举报', n(c.reports), ''],
+    ].map(([k, v, s]) =>
+      `<div class="card"><div class="k">${k}</div><div class="v num">${v}</div><div class="s">${s}</div></div>`
+    ).join('');
+
+    // 趋势条
+    const tr = d.trend || [];
+    if (!tr.length) $('trend').innerHTML = '<div class="empty">还没有数据</div>';
+    else {
+      const max = Math.max(...tr.map((x) => Number(x.tokens)), 1);
+      $('trend').innerHTML = tr.map((x) => {
+        const pct = Math.round(Number(x.tokens) / max * 100);
+        return `<div class="row" style="margin-bottom:6px">
+          <span class="dim mono" style="width:78px;font-size:11.5px">${String(x.day).slice(0,10)}</span>
+          <div class="bar" style="flex:1"><i style="width:${pct}%;background:var(--acc)"></i></div>
+          <span class="num dim" style="width:70px;text-align:right;font-size:11.5px">${n(x.tokens)}</span>
+        </div>`;
+      }).join('');
+    }
+
+    // 模型分布
+    const bm = d.byModel || [];
+    if (!bm.length) $('modelDist').innerHTML = '<div class="empty">还没有数据</div>';
+    else {
+      const total = bm.reduce((s, x) => s + Number(x.tokens), 0) || 1;
+      $('modelDist').innerHTML = bm.map((m) => {
+        const pct = Math.round(Number(m.tokens) / total * 100);
+        return `<div style="margin-bottom:9px">
+          <div class="row" style="font-size:12px">
+            <span class="mono">${esc(m.model)}</span><span class="spacer"></span>
+            <span class="dim num">${n(m.tokens)} tok · ${n(m.calls)} 次</span>
+          </div>
+          <div class="bar" style="margin-top:4px"><i style="width:${pct}%;background:var(--acc2)"></i></div>
+        </div>`;
+      }).join('');
+    }
+
+    $('dashRooms').innerHTML = (d.recentRooms || []).map((r) => `
+      <tr>
+        <td>${esc(r.game_name || r.game_id)}</td>
+        <td><span class="tag ${r.status === 'running' ? 'run' : r.status === 'ended' ? 'end' : 'wait'}">${esc(r.status)}</span></td>
+        <td class="num">${r.round ?? 0}</td>
+        <td class="num">${r.players ?? 0}</td>
+        <td class="num">${r.msgs ?? 0}</td>
+        <td class="dim mono" style="font-size:11.5px">${fmtTime(r.created_at)}</td>
+      </tr>`).join('') || '<tr><td colspan="6" class="empty">还没有房间</td></tr>';
+  } catch (e) { toast(e.message, true); }
+}
+
+/* ------------------------------ 房间 ------------------------------ */
+async function loadRooms() {
+  try {
+    const f = $('roomFilter').value;
+    const d = await api('/api/rooms' + (f ? '?status=' + f : ''));
+    $('roomRows').innerHTML = (d.rooms || []).map((r) => `
+      <tr>
+        <td>${esc(r.game_name || r.game_id)}</td>
+        <td>${esc(r.owner || '—')}</td>
+        <td><span class="tag ${r.status === 'running' ? 'run' : r.status === 'ended' ? 'end' : 'wait'}">${esc(r.status)}</span></td>
+        <td class="num">${r.round ?? 0}</td>
+        <td class="num">${r.players ?? 0}</td>
+        <td class="num">${r.msgs ?? 0}</td>
+        <td class="num">${n(r.tokens)}</td>
+        <td class="trunc dim">${esc(r.topic || '—')}</td>
+        <td class="dim mono" style="font-size:11.5px">${fmtTime(r.created_at)}</td>
+        <td class="row" style="gap:6px">
+          <button onclick="openRoom('${r.id}')">看</button>
+          <button class="danger" onclick="delRoom('${r.id}')">删</button>
+        </td>
+      </tr>`).join('') || '<tr><td colspan="10" class="empty">没有房间</td></tr>';
+  } catch (e) { toast(e.message, true); }
+}
+
+async function openRoom(id) {
+  try {
+    const d = await api('/api/rooms/' + id);
+    const r = d.room;
+    $('rdTitle').innerHTML = `${esc(r.game_name || r.game_id)} · ${shortId(id)}
+      <span class="sub">${esc(r.status)} · 第 ${r.round ?? 0} 轮</span>
+      <span class="right">
+        <button onclick="forceEnd('${id}')">强制结束</button>
+        <button onclick="closeRoom()">关闭</button>
+      </span>`;
+    $('rdPlayers').innerHTML = '<div class="row wrap" style="gap:8px">' +
+      (d.players || []).map((p) => `<span class="tag" style="padding:4px 10px">
+        ${p.seat}号 ${esc(p.name)} ${p.is_ai ? '<span class="dim">AI</span>' : '<span style="color:var(--acc2)">真人</span>'}
+      </span>`).join('') + '</div>';
+
+    $('rdChat').innerHTML = (d.messages || []).map((m) => {
+      const meta = m.meta_json || {};
+      const mt = [];
+      if (meta.model) mt.push(meta.model);
+      if (meta.tokens) mt.push(meta.tokens + ' tok');
+      if (meta.ttftMs) mt.push('首字 ' + Math.round(meta.ttftMs / 1000) + 's');
+      if (meta.rate) mt.push(meta.rate + ' tok/s');
+      const isSys = m.sender_type === 'system';
+      return `<div class="msg${isSys ? ' sys' : ''}">
+        <div class="who">${esc(m.sender_name || m.sender_type)} · ${esc(m.phase || '')} 第${m.round ?? 0}轮</div>
+        <div class="body">${esc(m.content) || '<span class="dim">（空）</span>'}</div>
+        ${mt.length ? `<div class="meta">${esc(mt.join(' · '))}</div>` : ''}
+      </div>`;
+    }).join('') || '<div class="empty">没有消息</div>';
+
+    $('rdState').textContent = JSON.stringify(d.state, null, 2).slice(0, 20000);
+    $('roomDetail').style.display = 'block';
+    $('roomDetail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (e) { toast(e.message, true); }
+}
+function closeRoom() { $('roomDetail').style.display = 'none'; }
+
+async function delRoom(id) {
+  if (!confirm('删除这个房间？消息会一起删掉，不可恢复')) return;
+  try {
+    await api('/api/rooms/' + id, { method: 'DELETE' });
+    toast('已删除'); loadRooms();
+  } catch (e) { toast(e.message, true); }
+}
+async function forceEnd(id) {
+  try {
+    const r = await api('/api/rooms/' + id + '/force-end', { method: 'POST' });
+    toast(r.note || '已结束'); openRoom(id);
+  } catch (e) { toast(e.message, true); }
+}
+
+/* ------------------------------ 用户 ------------------------------ */
+async function loadUsers() {
+  try {
+    const d = await api('/api/users');
+    $('userCount').textContent = '共 ' + (d.users || []).length + ' 个';
+    $('userRows').innerHTML = (d.users || []).map((u) => `
+      <tr>
+        <td>${esc(u.nickname)}</td>
+        <td class="mono dim" style="font-size:11.5px">${esc(u.id)}</td>
+        <td class="num">${n(u.rooms)}</td>
+        <td class="num">${n(u.tokens)}</td>
+        <td class="dim mono" style="font-size:11.5px">${fmtTime(u.created_at)}</td>
+        <td><button class="danger" onclick="delUser('${u.id}','${esc(u.nickname)}')">删</button></td>
+      </tr>`).join('') || '<tr><td colspan="6" class="empty">还没有用户</td></tr>';
+  } catch (e) { toast(e.message, true); }
+}
+async function delUser(id, name) {
+  if (!confirm('删除用户「' + name + '」？不可恢复')) return;
+  try {
+    await api('/api/users/' + id, { method: 'DELETE' });
+    toast('已删除'); loadUsers();
+  } catch (e) { toast(e.message, true); }
+}
+
+/* ------------------------------ 游戏配置 ------------------------------ */
+let curGame = null;
+async function loadGames() {
+  try {
+    const d = await api('/api/games');
+    $('gameTabs').innerHTML = (d.games || []).map((g) =>
+      `<button data-g="${esc(g.id)}" onclick="pickGame('${esc(g.id)}')">${esc(g.name)}</button>`
+    ).join('');
+    if (!curGame && d.games?.length) pickGame(d.games[0].id);
+  } catch (e) { toast(e.message, true); }
+}
+async function pickGame(id) {
+  curGame = id;
+  document.querySelectorAll('#gameTabs button').forEach((b) =>
+    b.className = b.dataset.g === id ? 'primary' : '');
+  try {
+    const d = await api('/api/games/' + id + '/config');
+    $('cfgText').value = JSON.stringify(d.config, null, 2);
+    $('cfgMsg').textContent = '';
+  } catch (e) { toast(e.message, true); }
+}
+function fmtConfig() {
+  try {
+    $('cfgText').value = JSON.stringify(JSON.parse($('cfgText').value), null, 2);
+    $('cfgMsg').textContent = '已格式化';
+  } catch (e) { $('cfgMsg').textContent = 'JSON 格式不对：' + e.message; }
+}
+async function saveConfig() {
+  if (!curGame) return toast('先选一个游戏', true);
+  let cfg;
+  try { cfg = JSON.parse($('cfgText').value); }
+  catch (e) { return toast('JSON 格式不对：' + e.message, true); }
+  try {
+    const r = await api('/api/games/' + curGame + '/config', { method: 'PUT', body: { config: cfg } });
+    $('cfgMsg').textContent = '已保存 · ' + new Date().toLocaleTimeString();
+    toast(r.note || '保存成功');
+  } catch (e) { toast(e.message, true); }
+}
+
+/* ------------------------------ 用量 ------------------------------ */
+async function loadUsage() {
+  try {
+    const d = await api('/api/usage?days=14');
+    $('usageDays').textContent = '近 ' + d.days + ' 天';
+    $('usageRows').innerHTML = (d.byDay || []).map((x) => `
+      <tr><td class="mono">${String(x.day).slice(0,10)}</td>
+      <td class="num">${n(x.tokens)}</td>
+      <td class="num">${n(x.calls)}</td>
+      <td class="num">${n(x.users)}</td></tr>`).join('')
+      || '<tr><td colspan="4" class="empty">还没有数据</td></tr>';
+    $('purposeRows').innerHTML = (d.byPurpose || []).map((x) => `
+      <tr><td>${esc(x.purpose || '—')}</td><td class="num">${n(x.calls)}</td>
+      <td class="num">${n(x.tokens)}</td></tr>`).join('')
+      || '<tr><td colspan="3" class="empty">还没有数据</td></tr>';
+    $('topUserRows').innerHTML = (d.topUsers || []).map((x) => `
+      <tr><td>${esc(x.nickname || shortId(x.user_id))}</td>
+      <td class="num">${n(x.tokens)}</td><td class="num">${n(x.calls)}</td></tr>`).join('')
+      || '<tr><td colspan="3" class="empty">还没有数据</td></tr>';
+  } catch (e) { toast(e.message, true); }
+}
+
+/* ------------------------------ 举报 ------------------------------ */
+async function loadReports() {
+  try {
+    const d = await api('/api/reports');
+    $('reportRows').innerHTML = (d.reports || []).map((r) => `
+      <tr>
+        <td class="dim mono" style="font-size:11.5px">${fmtTime(r.created_at)}</td>
+        <td>${esc(r.reporter || '—')}</td>
+        <td>${esc(r.reason)}</td>
+        <td class="trunc">${esc(r.message_content || '—')}</td>
+        <td class="trunc dim">${esc(r.detail || '—')}</td>
+        <td><button class="danger" onclick="delReport('${r.id}')">处理</button></td>
+      </tr>`).join('') || '<tr><td colspan="6" class="empty">没有举报</td></tr>';
+  } catch (e) { toast(e.message, true); }
+}
+async function delReport(id) {
+  try {
+    await api('/api/reports/' + id, { method: 'DELETE' });
+    toast('已处理'); loadReports();
+  } catch (e) { toast(e.message, true); }
+}
+
+/* ------------------------------ 系统 ------------------------------ */
+async function loadSystem() {
+  try {
+    const s = await api('/api/system');
+    const b = s.backend || {};
+    $('sysBox').innerHTML = `
+      <div class="cards">
+        <div class="card"><div class="k">后端</div>
+          <div class="v" style="color:${b.ok ? 'var(--ok)' : 'var(--err)'};font-size:17px">
+            ${b.ok ? '正常' : '异常'}</div>
+          <div class="s">${b.uptime ? '已运行 ' + Math.round(b.uptime) + ' 秒' : (b.error || '')}</div></div>
+        <div class="card"><div class="k">在线房间</div><div class="v num">${b.rooms ?? '—'}</div><div class="s">内存里跑的</div></div>
+        <div class="card"><div class="k">WebSocket</div><div class="v num">${b.ws?.connections ?? '—'}</div><div class="s">连接 / 房间 ${b.ws?.rooms ?? '—'}</div></div>
+        <div class="card"><div class="k">数据库</div><div class="v" style="font-size:17px">${esc(s.db?.size || '—')}</div><div class="s">postgres</div></div>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <span class="dim" style="font-size:12.5px">配置文件目录：</span>
+        <span class="mono">${esc(s.configDir)}</span>
+      </div>`;
+  } catch (e) { toast(e.message, true); }
+}
+
+/* ------------------------------ 启动 ------------------------------ */
+(async () => {
+  try {
+    const me = await api('/me');
+    if (me.user) showApp(); else showLogin();
+  } catch { showLogin(); }
+})();
+</script>
+</body>
+</html>

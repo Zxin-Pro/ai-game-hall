@@ -1,4 +1,4 @@
-import { env, providerChain, models } from '../env.js';
+import { env, getProviderChain, getModels } from '../env.js';
 import { logger } from '../logger.js';
 
 /* ------------------------------------------------------------------ */
@@ -91,7 +91,8 @@ async function once(
   opts: CallOptions,
   signal: AbortSignal,
 ): Promise<CallResult> {
-  const model = opts.model && opts.model.trim() ? opts.model.trim() : (models.speak || models.list[0] || 'gpt-4o-mini');
+  const m = getModels();
+  const model = opts.model && opts.model.trim() ? opts.model.trim() : (m.speak || m.list[0] || 'gpt-4o-mini');
   const url = `${provider.baseUrl.replace(/\/$/, '')}/chat/completions`;
   const stream = opts.stream ?? Boolean(opts.onDelta);
 
@@ -227,12 +228,14 @@ const isRetryable = (e: unknown): boolean => {
  * 对外唯一入口：重试 + 供应商切换全在这里
  */
 export async function callLLM(opts: CallOptions): Promise<CallResult> {
-  const chain = opts.noFallback ? providerChain.slice(0, 1) : providerChain;
+  const fullChain = getProviderChain();
+  const chain = opts.noFallback ? fullChain.slice(0, 1) : fullChain;
   let lastErr: unknown;
 
   for (let pi = 0; pi < chain.length; pi++) {
     const provider = chain[pi]!;
-    const attempts = pi === 0 ? env.LLM_RETRY + 1 : 1;
+    // 便宜中转站 503 很频繁，多给几次机会
+    const attempts = pi === 0 ? Math.max(env.LLM_RETRY + 1, 4) : 2;
     for (let a = 0; a < attempts; a++) {
       const ac = new AbortController();
       const timer = setTimeout(() => ac.abort(), opts.timeoutMs ?? env.LLM_TIMEOUT_MS);
@@ -254,6 +257,11 @@ export async function callLLM(opts: CallOptions): Promise<CallResult> {
         logger.warn({ provider: provider.name, attempt: a + 1, err: String(e).slice(0, 200), retryable }, 'llm 调用失败');
         sink?.onUsage({ tokens: 0, model: opts.model ?? '', purpose: opts.purpose ?? 'other', ok: false, ms: 0 });
         if (!retryable) break;
+        // 便宜中转站经常瞬时 503。立刻重试等于白试，这里指数退避。
+        if (a < attempts - 1) {
+          const wait = 700 * 2 ** a; // 700 / 1400 / 2800 / 5600 ms
+          await new Promise((r) => setTimeout(r, wait));
+        }
       } finally {
         clearTimeout(timer);
       }

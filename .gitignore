@@ -9,3 +9,6 @@ web-build
 app/android
 app/ios
 out
+
+# 管理后台的依赖
+admin/node_modules

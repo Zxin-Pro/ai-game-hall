@@ -55,7 +55,11 @@
       "name": "报价",
       "mode": "sequential",
       "actors": "alive",
-      "allowActions": ["offer", "counter", "speak"],
+      "allowActions": [
+        "offer",
+        "counter",
+        "speak"
+      ],
       "speaksPerActor": 1,
       "narration": "开始报价"
     },
@@ -64,7 +68,12 @@
       "name": "拉锯",
       "mode": "sequential",
       "actors": "alive",
-      "allowActions": ["counter", "threaten", "speak", "accept"],
+      "allowActions": [
+        "counter",
+        "threaten",
+        "speak",
+        "accept"
+      ],
       "speaksPerActor": 1,
       "narration": "进入拉锯"
     },
@@ -73,7 +82,13 @@
       "name": "最后通牒",
       "mode": "sequential",
       "actors": "alive",
-      "allowActions": ["offer", "counter", "accept", "walk_away", "threaten"],
+      "allowActions": [
+        "offer",
+        "counter",
+        "accept",
+        "walk_away",
+        "threaten"
+      ],
       "speaksPerActor": 1,
       "narration": "时间到了，最后一次报价"
     }
@@ -91,7 +106,7 @@
       "knowledge": "你有一个不能超过的上限，还有本周必须敲定的时间压力",
       "taboo": "不要主动报出自己的上限",
       "speakingStyle": "先说顾虑再说数字，语气平缓，偶尔用沉默",
-      "model": "deepseek-chat",
+      "model": "gpt-6.1-sol",
       "avatar": ""
     },
     {
@@ -106,7 +121,7 @@
       "knowledge": "你有一个不能低于的底价，资金链撑不到下个月",
       "taboo": "不要让对方看出你急",
       "speakingStyle": "数字给得慢，喜欢用「这个价格我没法回去交代」",
-      "model": "qwen-plus",
+      "model": "gpt-6-astra",
       "avatar": ""
     },
     {
@@ -121,7 +136,7 @@
       "knowledge": "你知道双方的一点底细，但不能明说",
       "taboo": "不要站队，一旦被一方认为偏袒就失去作用",
       "speakingStyle": "喜欢用「我理解您的意思，不过…」过渡",
-      "model": "gpt-4o-mini",
+      "model": "gpt-6.1-sol",
       "avatar": ""
     },
     {
@@ -136,7 +151,7 @@
       "knowledge": "你能看出谁在虚张声势，但不能直接说出来",
       "taboo": "不要替任何一方谈判",
       "speakingStyle": "一句话点破，说完就停",
-      "model": "gemini-flash",
+      "model": "gpt-5.5",
       "avatar": ""
     }
   ],
@@ -152,26 +167,48 @@
         "label": "报价",
         "kind": "number",
         "placeholder": "数字（万）",
-        "when": { "phase": ["offer", "haggle", "ultimatum"] }
+        "when": {
+          "phase": [
+            "offer",
+            "haggle",
+            "ultimatum"
+          ]
+        }
       },
       {
         "key": "speak",
         "label": "说话",
         "kind": "text",
         "placeholder": "施加压力，或者给个台阶",
-        "when": { "phase": ["opening", "offer", "haggle", "ultimatum"] }
+        "when": {
+          "phase": [
+            "opening",
+            "offer",
+            "haggle",
+            "ultimatum"
+          ]
+        }
       },
       {
         "key": "accept",
         "label": "接受当前报价",
         "kind": "instant",
-        "when": { "phase": ["haggle", "ultimatum"] }
+        "when": {
+          "phase": [
+            "haggle",
+            "ultimatum"
+          ]
+        }
       },
       {
         "key": "walk_away",
         "label": "起身走人",
         "kind": "instant",
-        "when": { "phase": ["ultimatum"] }
+        "when": {
+          "phase": [
+            "ultimatum"
+          ]
+        }
       }
     ]
   }

@@ -28,7 +28,8 @@
         "backgroundColor": "#0d0b14"
       },
       "permissions": ["VIBRATE", "POST_NOTIFICATIONS"],
-      "softwareKeyboardLayoutMode": "resize"
+      "softwareKeyboardLayoutMode": "resize",
+      "usesCleartextTraffic": true
     },
     "web": {
       "bundler": "metro",
@@ -44,11 +45,19 @@
           "icon": "./assets/notification-icon.png",
           "color": "#9b8cff"
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
       ]
     ],
     "extra": {
       "router": { "origin": false },
-      "apiBaseUrl": "http://10.0.2.2:8787"
+      "apiBaseUrl": "http://58.47.110.32:35028/agh"
     },
     "experiments": {
       "typedRoutes": true

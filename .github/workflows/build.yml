@@ -43,12 +43,30 @@ jobs:
           CI: '1'
           EXPO_NO_TELEMETRY: '1'
 
+      # ★ 关键：用固定的 keystore 覆盖模板生成的那份，
+      #   保证每次构建签名完全一致（用户要求：更新软件不能变签名）
+      - name: Pin signing keystore
+        working-directory: app/android/app
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > debug.keystore
+          ls -l debug.keystore
+          EXPECTED="5E:8F:16:06:2E:A3:CD:2C:4A:0D:00:00:00:BA:A6:F3:8C:AB:F6:25"
+          ACTUAL=$(keytool -list -v -keystore debug.keystore \
+            -storepass '${{ secrets.ANDROID_KEYSTORE_PASSWORD }}' \
+            -alias '${{ secrets.ANDROID_KEY_ALIAS }}' \
+            | grep 'SHA1:' | head -1 | sed 's/.*SHA1: //' | tr -d ' ')
+          echo "keystore SHA1 = $ACTUAL"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "::error::keystore 指纹不对，签名会变！期望 $EXPECTED"
+            exit 1
+          fi
+          echo "keystore 指纹正确 ✓"
+
       - name: Verify autolinking (catch missing expo modules early)
         working-directory: app
         run: |
           npx expo-modules-autolinking resolve --platform android > /dev/null
           echo "autolinking ok"
-          grep -c "expo-module-gradle-plugin" android/settings.gradle || true
 
       - name: Build release APK
         working-directory: app/android
@@ -66,6 +84,22 @@ jobs:
           ls -lh app/build/outputs/apk/release/
           echo "--- sha256 ---"
           sha256sum app/build/outputs/apk/release/*.apk
+
+      # ★ 构建后再验一次 APK 实际签名
+      - name: Verify APK signature
+        working-directory: app/android
+        run: |
+          APK=$(ls app/build/outputs/apk/release/*.apk | head -1)
+          echo "检查 $APK"
+          ACTUAL=$(keytool -printcert -jarfile "$APK" \
+            | grep 'SHA1:' | head -1 | sed 's/.*SHA1: //' | tr -d ' ')
+          echo "APK 签名 SHA1 = $ACTUAL"
+          echo "期望         = 5E:8F:16:06:2E:A3:CD:2C:4A:0D:00:00:00:BA:A6:F3:8C:AB:F6:25"
+          if [ "$ACTUAL" != "5E:8F:16:06:2E:A3:CD:2C:4A:0D:00:00:00:BA:A6:F3:8C:AB:F6:25" ]; then
+            echo "::error::APK 签名与预期不符，会覆盖安装失败"
+            exit 1
+          fi
+          echo "APK 签名校验通过 ✓"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -87,5 +121,6 @@ jobs:
           name: AI 游戏厅 latest
           body: |
             自动构建的 Android 安装包。
-            安装后如果后端没起，App 会进入离线演示模式。
+            签名固定（SHA1 5E:8F:16:06:2E:A3:CD:2C:4A:0D:00:00:00:BA:A6:F3:8C:AB:F6:25），
+            可直接覆盖安装旧版本。
           files: out/ai-game-hall.apk

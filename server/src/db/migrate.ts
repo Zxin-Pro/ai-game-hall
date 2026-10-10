@@ -175,10 +175,36 @@ CREATE TABLE IF NOT EXISTS user_memories (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS user_memories_user_idx ON user_memories (user_id, game_id);
+
+CREATE TABLE IF NOT EXISTS app_settings (
+  key        text PRIMARY KEY,
+  value      text NOT NULL DEFAULT '',
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
 `;
 
 export async function migrate() {
-  await sql.unsafe(DDL);
+  // 优先用 sql/001_init.sql（改表结构只改那一个文件）
+  // 读不到就退回代码里内嵌的那份，保证「clone 完就能跑」
+  let ddl = DDL;
+  try {
+    const { readFileSync } = await import('node:fs');
+    const { dirname, resolve } = await import('node:path');
+    const { fileURLToPath } = await import('node:url');
+    const here = dirname(fileURLToPath(import.meta.url));
+    // dist/db/ → ../../sql，src/db/ → ../../sql
+    for (const p of [
+      resolve(here, '../../sql/001_init.sql'),
+      resolve(here, '../../../sql/001_init.sql'),
+    ]) {
+      try {
+        ddl = readFileSync(p, 'utf8');
+        break;
+      } catch { /* 试下一个 */ }
+    }
+  } catch { /* 用内嵌的 */ }
+
+  await sql.unsafe(ddl);
   // eslint-disable-next-line no-console
   console.log('[migrate] 数据表就绪');
 }

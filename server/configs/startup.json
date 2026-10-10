@@ -48,7 +48,9 @@
       "name": "选赛道",
       "mode": "sequential",
       "actors": "alive",
-      "allowActions": ["speak"],
+      "allowActions": [
+        "speak"
+      ],
       "speaksPerActor": 1,
       "narration": "第一次全体会议，先把方向定下来"
     },
@@ -57,7 +59,12 @@
       "name": "做产品",
       "mode": "sequential",
       "actors": "alive",
-      "allowActions": ["build", "hire", "speak", "pass"],
+      "allowActions": [
+        "build",
+        "hire",
+        "speak",
+        "pass"
+      ],
       "speaksPerActor": 1,
       "narration": "产品周期开始"
     },
@@ -66,7 +73,13 @@
       "name": "增长",
       "mode": "sequential",
       "actors": "alive",
-      "allowActions": ["invest", "hire", "cut", "speak", "pass"],
+      "allowActions": [
+        "invest",
+        "hire",
+        "cut",
+        "speak",
+        "pass"
+      ],
       "speaksPerActor": 1,
       "narration": "增长压力上来了"
     },
@@ -75,7 +88,11 @@
       "name": "融资",
       "mode": "sequential",
       "actors": "alive",
-      "allowActions": ["pitch", "cut", "speak"],
+      "allowActions": [
+        "pitch",
+        "cut",
+        "speak"
+      ],
       "speaksPerActor": 1,
       "narration": "融资窗口打开"
     },
@@ -98,7 +115,7 @@
       "knowledge": "你掌握全局，但每轮的钱是有限的",
       "taboo": "不要在现金告急时还提议大额投入",
       "speakingStyle": "先下判断再给理由，喜欢用「我的判断是」",
-      "model": "deepseek-chat",
+      "model": "gpt-6.1-sol",
       "avatar": ""
     },
     {
@@ -113,7 +130,7 @@
       "knowledge": "你知道产品到了什么阶段，也知道哪里最脆",
       "taboo": "不要为了融资承诺做不到的事",
       "speakingStyle": "专业、爱用数字，常说「这个投入能换多少」",
-      "model": "qwen-plus",
+      "model": "gpt-6-astra",
       "avatar": ""
     },
     {
@@ -128,7 +145,7 @@
       "knowledge": "你知道现在的市场热度处在什么位置",
       "taboo": "不要承诺无法量化的增长",
       "speakingStyle": "热情、善用类比，喜欢说「现在是最好的时机」",
-      "model": "gpt-4o-mini",
+      "model": "gpt-6.1-sol",
       "avatar": ""
     },
     {
@@ -143,7 +160,7 @@
       "knowledge": "你知道准确的现金余额和每个决策的代价",
       "taboo": "不要在没算清回本路径前同意任何支出",
       "speakingStyle": "冷、直接，喜欢用「按现在的烧钱速度」开头",
-      "model": "gemini-flash",
+      "model": "gpt-5.5",
       "avatar": ""
     },
     {
@@ -158,7 +175,7 @@
       "knowledge": "你见过很多同类公司，知道什么会死",
       "taboo": "不要替管理层做决策",
       "speakingStyle": "一个问题接一个问题，常用「你们的护城河是什么」",
-      "model": "qwen-plus",
+      "model": "gpt-6-astra",
       "avatar": ""
     }
   ],
@@ -174,33 +191,58 @@
         "label": "发言",
         "kind": "text",
         "placeholder": "提出你的判断",
-        "when": { "phase": ["track", "product", "growth", "funding", "review"] }
+        "when": {
+          "phase": [
+            "track",
+            "product",
+            "growth",
+            "funding",
+            "review"
+          ]
+        }
       },
       {
         "key": "build",
         "label": "投产品",
         "kind": "number",
         "placeholder": "金额（万）",
-        "when": { "phase": ["product"] }
+        "when": {
+          "phase": [
+            "product"
+          ]
+        }
       },
       {
         "key": "invest",
         "label": "投市场",
         "kind": "number",
         "placeholder": "金额（万）",
-        "when": { "phase": ["growth"] }
+        "when": {
+          "phase": [
+            "growth"
+          ]
+        }
       },
       {
         "key": "pitch",
         "label": "去见投资人",
         "kind": "instant",
-        "when": { "phase": ["funding"] }
+        "when": {
+          "phase": [
+            "funding"
+          ]
+        }
       },
       {
         "key": "cut",
         "label": "砍预算",
         "kind": "instant",
-        "when": { "phase": ["growth", "funding"] }
+        "when": {
+          "phase": [
+            "growth",
+            "funding"
+          ]
+        }
       }
     ]
   }
