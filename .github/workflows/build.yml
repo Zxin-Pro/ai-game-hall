@@ -179,9 +179,9 @@ jobs:
             可直接覆盖安装旧版本。
           files: out/ai-game-hall.apk
 
-      # ★ 构建完直接把包和版本号登记到服务端：
-      #   管理后台立刻看得到，App 启动查 /api/app/latest 就会提示更新。
-      #   没配 GAMEHALL_URL / GAMEHALL_ADMIN_KEY 就只发 GitHub，不算失败。
+      # ★ 只发一个小 JSON 让服务端自己去 GitHub 拉包。
+      #   试过在 CI 里直接传 73MB，GitHub runner 到这台机器的长连接会卡死
+      #   （等满超时、收到 0 字节），两次都是。改成让服务器拉，几秒钟就好。
       - name: 登记新版本到服务端
         run: |
           URL="${{ secrets.GAMEHALL_URL }}"
@@ -191,14 +191,12 @@ jobs:
             exit 0
           fi
           NOTE=$(git log -1 --pretty=%s)
-          echo "登记 $APP_VERSION_NAME ($APP_VERSION_CODE) 到 $URL"
-          # ★ 必须去掉 Expect: 100-continue：大包上传时 curl 会先等服务器回 100，
-          #   而链路里这一等会直接挂住（表现为等满超时、0 字节）
-          curl -sS --http1.1 -m 900 -X POST "$URL/api/admin/publish-apk" \
+          SRC="https://github.com/${GITHUB_REPOSITORY}/releases/download/latest/ai-game-hall.apk"
+          echo "登记 $APP_VERSION_NAME ($APP_VERSION_CODE)"
+          printf '{"versionCode":%s,"versionName":"%s","note":"%s","sourceUrl":"%s"}' "$APP_VERSION_CODE" "$APP_VERSION_NAME" "$NOTE" "$SRC" > /tmp/pub.json
+          cat /tmp/pub.json
+          curl -sS --http1.1 -m 300 -X POST "$URL/api/admin/sync-apk" \
             -H "x-admin-key: $KEY" \
-            -H 'Expect:' \
-            -F "file=@out/ai-game-hall.apk" \
-            -F "versionCode=$APP_VERSION_CODE" \
-            -F "versionName=$APP_VERSION_NAME" \
-            -F "note=$NOTE" \
+            -H 'content-type: application/json' \
+            --data @/tmp/pub.json \
             -w "\nHTTP %{http_code}\n"

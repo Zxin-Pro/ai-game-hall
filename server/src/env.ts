@@ -32,6 +32,7 @@ const schema = z.object({
   APP_APK_URL: z.string().default(''),
   APP_UPDATE_NOTE: z.string().default(''),
   APP_MIN_VERSION_CODE: num(0),   // 低于它的强制更新（0 = 不强制）
+  APK_MIRROR_PREFIX: z.string().default(''),   // 拉 GitHub 时套的加速前缀
 
   FALLBACK_PROVIDER_URL: z.string().default(''),
   FALLBACK_PROVIDER_KEY: z.string().default(''),
@@ -88,6 +89,7 @@ export const HOT_KEYS = [
   'APP_APK_URL',
   'APP_UPDATE_NOTE',
   'APP_MIN_VERSION_CODE',
+  'APK_MIRROR_PREFIX',
 ] as const;
 
 export type HotKey = (typeof HOT_KEYS)[number];

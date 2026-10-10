@@ -1,7 +1,8 @@
 import type { FastifyInstance } from 'fastify';
-import { createWriteStream, mkdirSync, statSync } from 'node:fs';
+import { createWriteStream, mkdirSync, statSync, renameSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pipeline } from 'node:stream/promises';
+import https from 'node:https';
 import { env, cfg, HOT_KEYS, getModels, getProviderChain } from '../env.js';
 import { listSettings, saveSettings, resetSetting } from '../services/settings.js';
 import { callLLM } from '../llm/client.js';
@@ -24,6 +25,42 @@ function mask(v: string): string {
   if (!v) return '';
   if (v.length <= 10) return '****';
   return v.slice(0, 6) + '****' + v.slice(-4);
+}
+
+/** 默认从哪拉：GitHub Release 的固定 latest 标签 */
+const DEFAULT_RELEASE_URL =
+  'https://github.com/Zxin-Pro/ai-game-hall/releases/download/latest/ai-game-hall.apk';
+/** 国内直连 GitHub 慢，默认套一层加速前缀（后台可改） */
+const DEFAULT_MIRROR = 'https://gh-proxy.com/';
+
+/**
+ * 把远端文件下载到本地。
+ * 直接手写 https 请求 —— 不用 fetch 是因为这里要跟进度、要能延长时间，
+ * 而且服务端到 GitHub 的握手偶尔很慢。
+ */
+function downloadTo(url: string, dest: string): Promise<number> {
+  return new Promise((res, rej) => {
+    const req = https.get(url, { headers: { 'user-agent': 'ai-game-hall' } }, (r) => {
+      if (r.statusCode && r.statusCode >= 400) {
+        r.resume();
+        return rej(new Error(`HTTP ${r.statusCode}`));
+      }
+      // 中间可能有跳转
+      if (r.statusCode && r.statusCode >= 300 && r.statusCode < 400 && r.headers.location) {
+        r.resume();
+        return res(downloadTo(new URL(r.headers.location, url).toString(), dest));
+      }
+      let n = 0;
+      const out = createWriteStream(dest);
+      r.on('data', (c: Buffer) => { n += c.length; });
+      r.pipe(out);
+      out.on('finish', () => res(n));
+      out.on('error', rej);
+      r.on('error', rej);
+    });
+    req.setTimeout(180_000, () => req.destroy(new Error('下载超时')));
+    req.on('error', rej);
+  });
 }
 
 export default async function adminRoutes(app: FastifyInstance) {
@@ -97,6 +134,66 @@ export default async function adminRoutes(app: FastifyInstance) {
 
     logger.info({ bytes, versionCode, versionName }, '[admin] App 新版本已发布');
     return { ok: true, bytes, versionCode, versionName, apkUrl, changed };
+  });
+
+  /**
+   * 从 GitHub 拉新版 APK 并登记版本。
+   *
+   * 为什么不直接在 CI 里传 73MB 上来：GitHub runner 到这台机器的长连接
+   * 会卡死（等满超时、0 字节），实测过两次。改成 CI 只发一个几百字节的
+   * JSON，服务端自己去 GitHub 把包拉回来 —— 又快又稳。
+   */
+  app.post('/sync-apk', async (req, reply) => {
+    const b = (req.body ?? {}) as {
+      versionCode?: number | string;
+      versionName?: string;
+      note?: string;
+      minVersionCode?: number | string;
+      sourceUrl?: string;
+    };
+
+    const versionCode = Number(b.versionCode || 0);
+    if (!versionCode) return reply.code(400).send({ error: '缺少 versionCode' });
+
+    const src = b.sourceUrl || DEFAULT_RELEASE_URL;
+    // 每次换一下前缀，避免单个镜像被限速拖死
+    const mirror = cfg('APK_MIRROR_PREFIX') || DEFAULT_MIRROR;
+
+    const dir = resolve(env.UPLOAD_DIR, 'apk');
+    mkdirSync(dir, { recursive: true });
+    const dest = resolve(dir, 'ai-game-hall.apk');
+    const tmp = `${dest}.tmp`;
+
+    // ★ 先把整个包下完再切换，下载中途别让用户拿到半个包
+    let got = 0;
+    try {
+      got = await downloadTo(`${mirror}${src}`, tmp);
+    } catch (e) {
+      logger.warn({ err: String(e), mirror }, '[admin] 走加速拉包失败，回退直连');
+      try {
+        got = await downloadTo(src, tmp);
+      } catch (e2) {
+        return reply.code(502).send({ error: `拉包失败：${String(e2)}` });
+      }
+    }
+
+    if (got < 5 * 1024 * 1024) {
+      return reply.code(502).send({ error: `拉到的包太小（${got} 字节），不像 APK` });
+    }
+
+    renameSync(tmp, dest);
+
+    const apkUrl = `${env.PUBLIC_BASE_URL}/static/apk/ai-game-hall.apk`;
+    await saveSettings({ APP_VERSION_CODE: String(versionCode) });
+    await saveSettings({ APP_VERSION_NAME: b.versionName || String(versionCode) });
+    await saveSettings({ APP_APK_URL: apkUrl });
+    if (b.note) await saveSettings({ APP_UPDATE_NOTE: b.note });
+    if (b.minVersionCode !== undefined) {
+      await saveSettings({ APP_MIN_VERSION_CODE: String(b.minVersionCode) });
+    }
+
+    logger.info({ bytes: got, versionCode }, '[admin] 已从 GitHub 同步并发布新版');
+    return { ok: true, bytes: got, versionCode, apkUrl, mirror: `${mirror}${src}` };
   });
 
   /** 列出所有可热更新的配置（密钥做掩码） */
