@@ -8,6 +8,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import '../global.css';
 import { useAuth } from '../src/store/auth';
 import { useNotifications, usePlaytimeGuard } from '../src/lib/notifications';
+import { UpdateBanner } from '../src/components/UpdateBanner';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -33,6 +34,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <StatusBar style="light" />
+        <UpdateBanner />
         <Stack
           screenOptions={{
             headerShown: false,

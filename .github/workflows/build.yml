@@ -17,6 +17,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # ★ 每次构建都自动涨版本号，不用人手改：
+      #     versionCode = 1000 + 构建序号（只增不减，Android 才认是新版本）
+      #     版本名     = 1.<构建序号>
+      #   同时塞进 expo.extra，App 运行时能读到自己的版本
+      - name: 自动递增版本号
+        run: |
+          CODE=$((1000 + ${{ github.run_number }}))
+          NAME="1.${{ github.run_number }}"
+          echo "本次版本：$NAME（versionCode $CODE）"
+          echo "APP_VERSION_CODE=$CODE" >> "$GITHUB_ENV"
+          echo "APP_VERSION_NAME=$NAME" >> "$GITHUB_ENV"
+          NEW_CODE="$CODE" NEW_NAME="$NAME" node -e '
+            const fs = require("fs");
+            const p = "app/app.json";
+            const j = JSON.parse(fs.readFileSync(p, "utf8"));
+            j.expo.version = process.env.NEW_NAME;
+            j.expo.android = j.expo.android || {};
+            j.expo.android.versionCode = Number(process.env.NEW_CODE);
+            j.expo.extra = j.expo.extra || {};
+            j.expo.extra.versionCode = Number(process.env.NEW_CODE);
+            j.expo.extra.versionName = process.env.NEW_NAME;
+            fs.writeFileSync(p, JSON.stringify(j, null, 2) + "\n");
+            console.log("app.json 已写入:", j.expo.version, j.expo.android.versionCode);
+          '
+          grep -n '"version"\|versionCode' app/app.json
+
       - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
@@ -144,9 +170,32 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: AI 游戏厅 latest
+          name: AI 游戏厅 ${{ env.APP_VERSION_NAME }}
           body: |
+            AI 游戏厅 ${{ env.APP_VERSION_NAME }}（versionCode ${{ env.APP_VERSION_CODE }}）
+
             自动构建的 Android 安装包。
             签名固定（SHA1 5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25），
             可直接覆盖安装旧版本。
           files: out/ai-game-hall.apk
+
+      # ★ 构建完直接把包和版本号登记到服务端：
+      #   管理后台立刻看得到，App 启动查 /api/app/latest 就会提示更新。
+      #   没配 GAMEHALL_URL / GAMEHALL_ADMIN_KEY 就只发 GitHub，不算失败。
+      - name: 登记新版本到服务端
+        run: |
+          URL="${{ secrets.GAMEHALL_URL }}"
+          KEY="${{ secrets.GAMEHALL_ADMIN_KEY }}"
+          if [ -z "$URL" ] || [ -z "$KEY" ]; then
+            echo "::warning::没配 GAMEHALL_URL / GAMEHALL_ADMIN_KEY，跳过服务端登记"
+            exit 0
+          fi
+          NOTE=$(git log -1 --pretty=%s)
+          echo "登记 $APP_VERSION_NAME ($APP_VERSION_CODE) 到 $URL"
+          curl -sS -m 600 -X POST "$URL/api/admin/publish-apk" \
+            -H "x-admin-key: $KEY" \
+            -F "file=@out/ai-game-hall.apk" \
+            -F "versionCode=$APP_VERSION_CODE" \
+            -F "versionName=$APP_VERSION_NAME" \
+            -F "note=$NOTE" \
+            -w "\nHTTP %{http_code}\n"

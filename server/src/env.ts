@@ -25,6 +25,14 @@ const schema = z.object({
   DEFAULT_JUDGE_MODEL: z.string().default(''),
   DEFAULT_SUMMARY_MODEL: z.string().default(''),
 
+  // ---- App 版本 / 更新 ------------------------------------------------
+  // 发新包时由 CI 自动写进来，App 启动时查 /api/app/latest 就知道要不要更新
+  APP_VERSION_CODE: num(1),
+  APP_VERSION_NAME: z.string().default('1'),
+  APP_APK_URL: z.string().default(''),
+  APP_UPDATE_NOTE: z.string().default(''),
+  APP_MIN_VERSION_CODE: num(0),   // 低于它的强制更新（0 = 不强制）
+
   FALLBACK_PROVIDER_URL: z.string().default(''),
   FALLBACK_PROVIDER_KEY: z.string().default(''),
 
@@ -75,6 +83,11 @@ export const HOT_KEYS = [
   'CONTEXT_MESSAGE_WINDOW',
   'DAILY_TOKEN_BUDGET_K',
   'INVITE_CODES',
+  'APP_VERSION_CODE',
+  'APP_VERSION_NAME',
+  'APP_APK_URL',
+  'APP_UPDATE_NOTE',
+  'APP_MIN_VERSION_CODE',
 ] as const;
 
 export type HotKey = (typeof HOT_KEYS)[number];

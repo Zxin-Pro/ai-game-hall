@@ -1,4 +1,7 @@
 import type { FastifyInstance } from 'fastify';
+import { createWriteStream, mkdirSync, statSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { pipeline } from 'node:stream/promises';
 import { env, cfg, HOT_KEYS, getModels, getProviderChain } from '../env.js';
 import { listSettings, saveSettings, resetSetting } from '../services/settings.js';
 import { callLLM } from '../llm/client.js';
@@ -43,6 +46,58 @@ export default async function adminRoutes(app: FastifyInstance) {
   });
 
   // ---- 配置读写 ----------------------------------------------------------
+
+  /**
+   * 发布 App：直接收下新的 APK 并登记版本号。
+   *
+   * CI 构建完就调这个，一次把「文件 + 版本号 + 更新说明」全登记好，
+   * 管理后台和 App 的自更新查询立刻就是最新的，不用人插手。
+   * 参数（multipart）：file=apk，versionCode，versionName，note，minVersionCode
+   */
+  app.post('/publish-apk', async (req, reply) => {
+    const parts = req.parts();
+    let saved = '';
+    let bytes = 0;
+    const fields: Record<string, string> = {};
+
+    for await (const part of parts) {
+      if (part.type === 'file') {
+        const dir = resolve(env.UPLOAD_DIR, 'apk');
+        mkdirSync(dir, { recursive: true });
+        const dest = resolve(dir, 'ai-game-hall.apk');
+        await pipeline(part.file, createWriteStream(dest));
+        bytes = statSync(dest).size;
+        saved = dest;
+      } else {
+        fields[part.fieldname] = String(part.value ?? '');
+      }
+    }
+
+    if (!saved) return reply.code(400).send({ error: '没收到 apk 文件（字段名要是 file）' });
+
+    const versionCode = Number(fields.versionCode || 0);
+    const versionName = fields.versionName || String(versionCode);
+    const note = fields.note || '';
+    const minVersionCode = Number(fields.minVersionCode || 0);
+
+    // 文件对外地址：PUBLIC_BASE_URL + /static/apk/xxx.apk
+    const apkUrl = `${env.PUBLIC_BASE_URL}/static/apk/ai-game-hall.apk`;
+
+    const changed: string[] = [];
+    if (versionCode > 0) {
+      await saveSettings({ APP_VERSION_CODE: String(versionCode) });
+      changed.push('APP_VERSION_CODE');
+    }
+    await saveSettings({ APP_VERSION_NAME: versionName });
+    await saveSettings({ APP_APK_URL: apkUrl });
+    if (note) await saveSettings({ APP_UPDATE_NOTE: note });
+    if (minVersionCode >= 0) {
+      await saveSettings({ APP_MIN_VERSION_CODE: String(minVersionCode) });
+    }
+
+    logger.info({ bytes, versionCode, versionName }, '[admin] App 新版本已发布');
+    return { ok: true, bytes, versionCode, versionName, apkUrl, changed };
+  });
 
   /** 列出所有可热更新的配置（密钥做掩码） */
   app.get('/settings', async () => {

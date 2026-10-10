@@ -21,6 +21,7 @@ import { roomStore } from './services/roomStore.js';
 import { seedGames } from './gameconfig/seed.js';
 import { loadSettingsIntoMemory } from './services/settings.js';
 import adminRoutes from './routes/admin.js';
+import appMetaRoutes from './routes/appMeta.js';
 
 export async function buildServer() {
   const app = Fastify({
@@ -93,6 +94,8 @@ export async function buildServer() {
   await app.register(async (i) => { await i.register(roomRoutes); }, { prefix: '/api' });
   await app.register(async (i) => { await i.register(meRoutes); }, { prefix: '/api' });
   await app.register(async (i) => { await i.register(uploadRoutes); }, { prefix: '/api' });
+  // App 自更新：公开接口，不用登录
+  await app.register(async (i) => { await i.register(appMetaRoutes); }, { prefix: '/api/app' });
   // 管理后台专用接口：用独立的管理员密钥鉴权，不跟普通用户混
   await app.register(async (i) => { await i.register(adminRoutes); }, { prefix: '/api/admin' });
 

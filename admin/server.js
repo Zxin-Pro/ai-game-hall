@@ -277,14 +277,61 @@ app.delete('/api/rooms/:id', requireLogin, async (req, res, next) => {
 
 app.get('/api/users', requireLogin, async (req, res, next) => {
   try {
+    const q = String(req.query.q ?? '').trim();
+    const limit = Math.min(Number(req.query.limit) || 200, 500);
+    // ★ 注意：rooms 的房主字段是 host_id，不是 owner_id
     const rows = (await pool.query(`
       select u.id, u.nickname, u.avatar, u.created_at,
-             (select count(*) from rooms r where r.owner_id = u.id)::int as rooms,
-             (select coalesce(sum(tokens_used),0)::bigint from daily_usage d where d.user_id = u.id) as tokens
+             (select count(*) from rooms r where r.host_id = u.id)::int as rooms,
+             (select count(*) from room_players p where p.user_id = u.id)::int as seats,
+             (select count(*) from memories mm where mm.user_id = u.id)::int as memories,
+             (select coalesce(sum(d.tokens_used),0)::bigint from daily_usage d where d.user_id = u.id) as tokens,
+             (select max(r2.created_at) from rooms r2 where r2.host_id = u.id) as last_room_at
       from users u
-      order by u.created_at desc limit 200
-    `)).rows;
-    res.json({ users: rows });
+      where ($1 = '' or u.nickname ilike '%' || $1 || '%' or u.id::text = $1)
+      order by u.created_at desc limit $2
+    `, [q, limit])).rows;
+    res.json({ users: rows, total: rows.length, q });
+  } catch (e) {
+    next(e);
+  }
+});
+
+app.get('/api/users/:id', requireLogin, async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    if (!/^[0-9a-f-]{36}$/i.test(id)) return res.status(400).json({ error: '非法 id' });
+    const u = (await pool.query(`
+      select id, nickname, avatar, created_at, device_fingerprint
+      from users where id = $1
+    `, [id])).rows[0];
+    if (!u) return res.status(404).json({ error: '查不到这个用户' });
+
+    const rooms = (await pool.query(`
+      select r.id, r.game_id, r.status, r.round, r.tokens_used, r.created_at,
+             g.name as game_name,
+             (select count(*) from room_players p where p.room_id = r.id)::int as players,
+             (select count(*) from messages m where m.room_id = r.id)::int    as msgs
+      from rooms r left join games g on g.id = r.game_id
+      where r.host_id = $1
+      order by r.created_at desc limit 50
+    `, [id])).rows;
+
+    const usage = (await pool.query(`
+      select date::text as date, tokens_used, games_played
+      from daily_usage where user_id = $1
+      order by date desc limit 30
+    `, [id])).rows;
+
+    const agg = (await pool.query(`
+      select
+        (select coalesce(sum(tokens_used),0)::bigint from daily_usage where user_id = $1) as tokens,
+        (select coalesce(sum(games_played),0)::int  from daily_usage where user_id = $1) as games_played,
+        (select count(*)::int from rooms where host_id = $1) as rooms,
+        (select count(*)::int from memories where user_id = $1) as memories
+    `, [id])).rows[0];
+
+    res.json({ user: u, agg, rooms, usage });
   } catch (e) {
     next(e);
   }
@@ -293,8 +340,9 @@ app.get('/api/users', requireLogin, async (req, res, next) => {
 app.delete('/api/users/:id', requireLogin, async (req, res, next) => {
   try {
     const { id } = req.params;
+    // ★ 真表名是 memories，不是 user_memories
     await pool.query('delete from refresh_tokens where user_id = $1', [id]).catch(() => {});
-    await pool.query('delete from user_memories where user_id = $1', [id]).catch(() => {});
+    await pool.query('delete from memories where user_id = $1', [id]).catch(() => {});
     await pool.query('delete from users where id = $1', [id]);
     res.json({ ok: true });
   } catch (e) {
@@ -308,9 +356,13 @@ const CONFIG_DIR = process.env.CONFIG_DIR || '/app/configs';
 
 app.get('/api/games', requireLogin, async (req, res, next) => {
   try {
-    const rows = (await pool.query(
-      'select id, name, description, engine_type, min_players, max_players, updated_at from games order by name',
-    )).rows;
+    // ★ games 表没有 updated_at 列（只有 sort / enabled）
+    const rows = (await pool.query(`
+      select g.id, g.name, g.description, g.engine_type,
+             g.min_players, g.max_players, g.sort, g.enabled,
+             (select count(*) from rooms r where r.game_id = g.id)::int as rooms
+      from games g order by g.sort, g.name
+    `)).rows;
     res.json({ games: rows });
   } catch (e) {
     next(e);
@@ -343,8 +395,9 @@ app.put('/api/games/:id/config', requireLogin, async (req, res, next) => {
     fs.writeFileSync(file, JSON.stringify(cfg, null, 2) + '\n');
 
     // 顺手同步进库，让主服务下次 seed 前就能用
+    // ★ games 表没有 updated_at
     await pool.query(
-      `update games set name = $2, description = $3, config_json = $4::jsonb, updated_at = now()
+      `update games set name = $2, description = $3, config_json = $4::jsonb
        where id = $1`,
       [id, cfg.name ?? id, cfg.description ?? '', JSON.stringify(cfg)],
     ).catch(() => {});
@@ -360,35 +413,46 @@ app.put('/api/games/:id/config', requireLogin, async (req, res, next) => {
 app.get('/api/usage', requireLogin, async (req, res, next) => {
   try {
     const days = Math.min(Number(req.query.days) || 14, 90);
+    // ★ daily_usage 的真字段是 (user_id, date, games_played, tokens_used)
+    //   没有 day / tokens / purpose —— 之前那套查询全是错的
     const byDay = (await pool.query(`
-      select day,
-             coalesce(sum(tokens),0)::bigint as tokens,
-             count(*)::int as calls,
-             count(distinct user_id)::int as users
+      select date::text as date,
+             coalesce(sum(tokens_used),0)::bigint as tokens,
+             coalesce(sum(games_played),0)::int   as games,
+             count(distinct user_id)::int         as users
       from daily_usage
-      where day >= current_date - ($1 || ' days')::interval
-      group by day order by day desc
+      where date >= current_date - ($1 || ' days')::interval
+      group by date order by date desc
     `, [days])).rows;
 
-    const byPurpose = (await pool.query(`
-      select purpose, count(*)::int as calls,
-             coalesce(sum(tokens),0)::bigint as tokens
-      from daily_usage
-      where day >= current_date - ($1 || ' days')::interval
-      group by purpose order by tokens desc
-    `, [days])).rows;
+    // 用途/模型分布从消息的 meta_json 里取（那里才记了 model 和 tokens）
+    const byModel = (await pool.query(`
+      select coalesce(meta_json->>'model','(未记)') as model,
+             count(*)::int as calls,
+             coalesce(sum(coalesce((meta_json->>'tokens')::int,0)),0)::bigint as tokens,
+             coalesce(round(avg(coalesce((meta_json->>'ms')::int,0)))::int,0) as avg_ms
+      from messages
+      where sender_type = 'ai' and meta_json ? 'model'
+      group by 1 order by tokens desc limit 20
+    `).catch(() => [])).rows;
 
     const topUsers = (await pool.query(`
       select d.user_id, u.nickname,
-             coalesce(sum(d.tokens),0)::bigint as tokens,
-             count(*)::int as calls
+             coalesce(sum(d.tokens_used),0)::bigint as tokens,
+             coalesce(sum(d.games_played),0)::int  as games
       from daily_usage d left join users u on u.id = d.user_id
-      where d.day >= current_date - ($1 || ' days')::interval
+      where d.date >= current_date - ($1 || ' days')::interval
       group by d.user_id, u.nickname
       order by tokens desc limit 20
     `, [days])).rows;
 
-    res.json({ byDay, byPurpose, topUsers, days });
+    const global = (await pool.query(`
+      select coalesce(sum(tokens_used),0)::bigint as tokens,
+             coalesce(sum(calls),0)::int as calls
+      from global_usage
+    `).catch(() => [{ tokens: 0, calls: 0 }])).rows[0] ?? { tokens: 0, calls: 0 };
+
+    res.json({ byDay, byModel, topUsers, global, days });
   } catch (e) {
     next(e);
   }
@@ -398,11 +462,16 @@ app.get('/api/usage', requireLogin, async (req, res, next) => {
 
 app.get('/api/reports', requireLogin, async (req, res, next) => {
   try {
+    // ★ messages 没有 sender_name，名字在 room_players.name
     const rows = (await pool.query(`
-      select r.*, m.content as message_content, m.sender_name,
-             u.nickname as reporter
+      select r.*, m.content as message_content, m.sender_type,
+             p.name as sender_name,
+             u.nickname as reporter,
+             rm.game_id, rm.id as room_id
       from reports r
       left join messages m on m.id = r.message_id
+      left join room_players p on p.id::text = m.sender_id
+      left join rooms rm on rm.id = m.room_id
       left join users u on u.id = r.reporter_id
       order by r.created_at desc limit 200
     `)).rows;

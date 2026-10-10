@@ -7,6 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { api } from '../../src/lib/api';
 import { useAuth } from '../../src/store/auth';
 import { haptic, formatDuration } from '../../src/lib/ui';
+import { fetchLatest, myVersionCode, myVersionName } from '../../src/lib/updater';
+import { Linking } from 'react-native';
 
 interface Memory { id: string; key: string; value: string }
 
@@ -14,6 +16,24 @@ export default function Me() {
   const insets = useSafeAreaInsets();
   const user = useAuth((s) => s.user);
   const logout = useAuth((s) => s.logout);
+
+  // 手动检查更新：直接问服务端最新版本，和自己比
+  const onCheckUpdate = useCallback(async () => {
+    haptic.light();
+    const latest = await fetchLatest();
+    if (!latest) return Alert.alert('检查失败', '网络不太好，等会儿再试');
+    if (latest.versionCode <= myVersionCode()) {
+      return Alert.alert('已是最新版', `当前 v${myVersionName()}`);
+    }
+    Alert.alert(
+      `发现新版本 ${latest.versionName}`,
+      latest.note || '去下载新的安装包',
+      [
+        { text: '以后再说', style: 'cancel' },
+        { text: '去更新', onPress: () => { if (latest.apkUrl) Linking.openURL(latest.apkUrl).catch(() => {}); } },
+      ],
+    );
+  }, []);
 
   const [today, setToday] = useState({ gamesPlayed: 0, tokensUsed: 0 });
   const [globalTokens, setGlobalTokens] = useState(0);
@@ -155,6 +175,11 @@ export default function Me() {
           <Item label="内容分级 12+" right="已开启" />
           <Item label="防沉迷提醒" right="每 60 分钟" />
           <Item label="推送通知" onPress={() => { haptic.light(); }} right="去系统设置" />
+          <Item
+            label="检查更新"
+            right={`当前 v${myVersionName()}`}
+            onPress={onCheckUpdate}
+          />
         </View>
 
         <Pressable onPress={doLogout} className="mx-4 bg-ink-900 rounded-2xl py-3.5 items-center">
@@ -164,7 +189,7 @@ export default function Me() {
         {loading && <ActivityIndicator color="#9b8cff" className="mt-6" />}
 
         <Text className="text-white/15 text-[10px] text-center mt-8">
-          AI 游戏厅 v0.1.0 · 所有 AI 发言由模型生成，请勿作为现实决策依据
+          AI 游戏厅 v{myVersionName()} · 所有 AI 发言由模型生成，请勿作为现实决策依据
         </Text>
       </ScrollView>
     </View>

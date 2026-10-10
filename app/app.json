@@ -29,7 +29,8 @@
       },
       "permissions": ["VIBRATE", "POST_NOTIFICATIONS"],
       "softwareKeyboardLayoutMode": "resize",
-      "usesCleartextTraffic": true
+      "usesCleartextTraffic": true,
+      "versionCode": 1
     },
     "web": {
       "bundler": "metro",
