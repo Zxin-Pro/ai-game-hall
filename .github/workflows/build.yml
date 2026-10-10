@@ -92,18 +92,30 @@ jobs:
           echo "--- sha256 ---"
           sha256sum app/build/outputs/apk/release/*.apk
 
-      # ★ 构建后再验一次 APK 实际签名
+      # ★ 构建后再验一次 APK 实际签名（用 Android 官方 apksigner，v1/v2/v3 都认）
       - name: Verify APK signature
         working-directory: app/android
         run: |
           APK=$(ls app/build/outputs/apk/release/*.apk | head -1)
           echo "检查 $APK"
-          norm() { tr -d ' :\r\n\t' | tr 'a-f' 'A-F'; }
+
+          APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -1)
+          echo "apksigner = $APKSIGNER"
+
+          if [ -z "$APKSIGNER" ]; then
+            echo "::warning::没找到 apksigner，跳过签名校验"
+            exit 0
+          fi
+
+          REPORT=$("$APKSIGNER" verify --print-certs "$APK" 2>&1)
+          echo "$REPORT"
+
           EXPECTED_HEX="5E8F16062EA3CD2C4A0D547876BAA6F38CABF625"
-          RAW=$(keytool -printcert -jarfile "$APK" | awk '/SHA1:/ {print $2; exit}')
-          ACTUAL_HEX=$(printf '%s' "$RAW" | norm)
-          echo "APK 签名 SHA1 = [$RAW]"
-          echo "归一化        = [$ACTUAL_HEX]"
+          ACTUAL_HEX=$(printf '%s' "$REPORT" \
+            | awk -F': ' '/SHA-1 digest/ {print $2; exit}' \
+            | tr -d ' :\r\n\t' | tr 'a-f' 'A-F')
+
+          echo "APK 签名 SHA1 = [$ACTUAL_HEX]"
           echo "期望          = [$EXPECTED_HEX]"
           if [ "$ACTUAL_HEX" != "$EXPECTED_HEX" ]; then
             echo "::error::APK 签名与预期不符，会覆盖安装失败"
@@ -131,6 +143,6 @@ jobs:
           name: AI 游戏厅 latest
           body: |
             自动构建的 Android 安装包。
-            签名固定（SHA1 5E:8F:16:06:2E:A3:CD:2C:4A:0D:00:00:00:BA:A6:F3:8C:AB:F6:25），
+            签名固定（SHA1 5E:8F:16:06:2E:A3:CD:2C:4A:0D:54:78:76:BA:A6:F3:8C:AB:F6:25），
             可直接覆盖安装旧版本。
           files: out/ai-game-hall.apk
