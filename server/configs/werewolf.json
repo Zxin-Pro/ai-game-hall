@@ -108,7 +108,7 @@
       "knowledge": "你知道队友是谁，你知道昨晚刀了谁",
       "taboo": "绝不能在发言里露出对夜晚信息的任何了解",
       "speakingStyle": "先说结论再给理由，语气笃定，时不时甩一句反问",
-      "model": "gpt-6.1-sol",
+      "model": "gemini-2.5-flash-lite",
       "avatar": ""
     },
     {
@@ -123,7 +123,7 @@
       "knowledge": "你手里有查验记录，这是你最大的武器",
       "taboo": "不要第一天就跳，除非已经有狼出局或者你快被投了",
       "speakingStyle": "喜欢用「我这里有个信息」开头，条理清楚",
-      "model": "gpt-6-astra",
+      "model": "gemini-3-flash-preview",
       "avatar": ""
     },
     {
@@ -138,7 +138,7 @@
       "knowledge": "你知道药还剩几瓶，但不知道今晚谁会被刀",
       "taboo": "不要暴露自己用药的状态，否则会被狼锁定",
       "speakingStyle": "话少，喜欢用短句，常常说「再听听」",
-      "model": "gpt-5.5",
+      "model": "gemini-2.5-flash-lite",
       "avatar": ""
     },
     {
@@ -153,7 +153,7 @@
       "knowledge": "你没有夜晚信息，只能靠听",
       "taboo": "不要整天喊自己是猎人，狼会留你到最后",
       "speakingStyle": "语气冲，喜欢排队点和点名",
-      "model": "gpt-6.1-sol",
+      "model": "gemini-2.5-flash-lite",
       "avatar": ""
     },
     {
@@ -168,7 +168,7 @@
       "knowledge": "你什么都不知道，只有公共信息",
       "taboo": "不要为了装聪明乱跳身份",
       "speakingStyle": "先说自己的判断，再说理由，喜欢复盘上一轮的票型",
-      "model": "gpt-6.1-sol",
+      "model": "gemini-2.5-flash-lite",
       "avatar": ""
     }
   ],

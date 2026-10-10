@@ -190,7 +190,7 @@
       "knowledge": "你掌握全部卷宗，但没有立场",
       "taboo": "不要偏袒任何一方，不要替当事人说话",
       "speakingStyle": "正式、简短、常用「本庭认为」开头",
-      "model": "gpt-6-astra",
+      "model": "gemini-3-flash-preview",
       "avatar": ""
     },
     {
@@ -205,7 +205,7 @@
       "knowledge": "你只掌握原告方提供的证据",
       "taboo": "不要夸大事实，被对方指出漏洞会很致命",
       "speakingStyle": "先给结论，再摆证据，最后一句反问收尾",
-      "model": "gpt-6.1-sol",
+      "model": "gemini-2.5-flash-lite",
       "avatar": ""
     },
     {
@@ -220,7 +220,7 @@
       "knowledge": "你只掌握被告方提供的证据",
       "taboo": "不要把话题引到对自己不利的细节上",
       "speakingStyle": "喜欢用「对方忽略了一点」开头",
-      "model": "gpt-6.1-sol",
+      "model": "gemini-2.5-flash-lite",
       "avatar": ""
     },
     {
@@ -235,7 +235,7 @@
       "knowledge": "你只知道你的证词",
       "taboo": "不要编造你没看到的事",
       "speakingStyle": "口语化，回答短，常用「我当时看到的是…」",
-      "model": "gpt-6.1-sol",
+      "model": "gemini-2.5-flash-lite",
       "avatar": ""
     },
     {
@@ -250,7 +250,7 @@
       "knowledge": "你只听双方说了什么，不给任何一方当顾问",
       "taboo": "不要在庭上讨论案情细节，只在评议阶段投票",
       "speakingStyle": "朴素、直白，喜欢问「那证据呢」",
-      "model": "gpt-5.5",
+      "model": "gemini-2.5-flash-lite",
       "avatar": ""
     }
   ],

@@ -106,7 +106,7 @@
       "knowledge": "你有一个不能超过的上限，还有本周必须敲定的时间压力",
       "taboo": "不要主动报出自己的上限",
       "speakingStyle": "先说顾虑再说数字，语气平缓，偶尔用沉默",
-      "model": "gpt-6.1-sol",
+      "model": "gemini-2.5-flash-lite",
       "avatar": ""
     },
     {
@@ -121,7 +121,7 @@
       "knowledge": "你有一个不能低于的底价，资金链撑不到下个月",
       "taboo": "不要让对方看出你急",
       "speakingStyle": "数字给得慢，喜欢用「这个价格我没法回去交代」",
-      "model": "gpt-6-astra",
+      "model": "gemini-3-flash-preview",
       "avatar": ""
     },
     {
@@ -136,7 +136,7 @@
       "knowledge": "你知道双方的一点底细，但不能明说",
       "taboo": "不要站队，一旦被一方认为偏袒就失去作用",
       "speakingStyle": "喜欢用「我理解您的意思，不过…」过渡",
-      "model": "gpt-6.1-sol",
+      "model": "gemini-2.5-flash-lite",
       "avatar": ""
     },
     {
@@ -151,7 +151,7 @@
       "knowledge": "你能看出谁在虚张声势，但不能直接说出来",
       "taboo": "不要替任何一方谈判",
       "speakingStyle": "一句话点破，说完就停",
-      "model": "gpt-5.5",
+      "model": "gemini-2.5-flash-lite",
       "avatar": ""
     }
   ],

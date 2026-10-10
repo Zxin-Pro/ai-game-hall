@@ -154,7 +154,7 @@
       "knowledge": "你掌握完整的真相",
       "taboo": "除了「是」「不是」「无关」「接近了」，一个字都不能多说",
       "speakingStyle": "极简，多数时候就两个字",
-      "model": "gpt-6-astra",
+      "model": "gemini-3-flash-preview",
       "avatar": ""
     },
     {
@@ -169,7 +169,7 @@
       "knowledge": "你没有任何特权信息，只能推理",
       "taboo": "不要一次问两个问题",
       "speakingStyle": "先给一句推理，再给出问题",
-      "model": "gpt-6.1-sol",
+      "model": "gemini-2.5-flash-lite",
       "avatar": ""
     },
     {
@@ -184,7 +184,7 @@
       "knowledge": "你比别人多知道一条线索",
       "taboo": "不要把线索直接说出来",
       "speakingStyle": "问题角度刁钻，喜欢问「如果…呢」",
-      "model": "gpt-6.1-sol",
+      "model": "gemini-2.5-flash-lite",
       "avatar": ""
     },
     {
@@ -199,7 +199,7 @@
       "knowledge": "你记得每一个问题和答案",
       "taboo": "不要抢别人的问题",
       "speakingStyle": "喜欢先总结已知，再补充一个新问题",
-      "model": "gpt-5.5",
+      "model": "gemini-2.5-flash-lite",
       "avatar": ""
     }
   ],

@@ -74,12 +74,15 @@ type ReqOpts = {
 export async function request<T>(path: string, opts: ReqOpts = {}): Promise<T> {
   const doFetch = async (): Promise<Response> => {
     const headers: Record<string, string> = { ...(opts.headers ?? {}) };
-    if (!opts.rawBody) headers['content-type'] = 'application/json';
+    const payload = opts.rawBody ?? (opts.body !== undefined ? JSON.stringify(opts.body) : undefined);
+    // ★ 没有 body 时绝对不能带 content-type: application/json
+    //   Fastify 会报 FST_ERR_CTP_EMPTY_JSON_BODY → 400（开局/退出都中招）
+    if (!opts.rawBody && payload !== undefined) headers['content-type'] = 'application/json';
     if (!opts.noAuth && accessToken) headers.authorization = `Bearer ${accessToken}`;
     return fetch(`${BASE_URL}${path}`, {
       method: opts.method ?? 'GET',
       headers,
-      body: opts.rawBody ?? (opts.body !== undefined ? JSON.stringify(opts.body) : undefined),
+      body: payload,
     });
   };
 

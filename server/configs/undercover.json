@@ -154,7 +154,7 @@
       "knowledge": "你只知道自己这个词，不知道别人拿到什么",
       "taboo": "绝不能直接说出你的词",
       "speakingStyle": "描述偏具体，喜欢说使用场景，比如「我夏天几乎天天离不开」",
-      "model": "gpt-6.1-sol",
+      "model": "gemini-2.5-flash-lite",
       "avatar": ""
     },
     {
@@ -169,7 +169,7 @@
       "knowledge": "你知道自己的词和平民的不一样，但不知道具体差在哪",
       "taboo": "不要过早说得太具体，也别和任何人的描述完全重合",
       "speakingStyle": "描述偏模糊，多用「就是那个嘛」「你们懂的吧」这类词兜底",
-      "model": "gpt-6-astra",
+      "model": "gemini-3-flash-preview",
       "avatar": ""
     },
     {
@@ -184,7 +184,7 @@
       "knowledge": "你什么都不知道，必须靠听",
       "taboo": "不要第一个发言，不要描述得太笼统",
       "speakingStyle": "发言短，喜欢复述别人的关键词来混过去",
-      "model": "gpt-5.5",
+      "model": "gemini-2.5-flash-lite",
       "avatar": ""
     }
   ],

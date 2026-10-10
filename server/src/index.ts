@@ -38,6 +38,27 @@ export async function buildServer() {
 
   await app.register(cors, { origin: true, credentials: true });
 
+  // ★ 宽容处理空的 JSON body。
+  //   Fastify 默认会拿 FST_ERR_CTP_EMPTY_JSON_BODY 把请求打成 400，
+  //   但很多客户端（包括我们自己的 App）在 POST 无参数接口时会带上
+  //   content-type: application/json 却不发 body（比如 /start、/leave）。
+  //   这里把空串当成 {}，避免开局直接失败。
+  app.addContentTypeParser(
+    'application/json',
+    { parseAs: 'string' },
+    (_req, body: string, done) => {
+      const text = (body ?? '').trim();
+      if (!text) return done(null, {});
+      try {
+        done(null, JSON.parse(text));
+      } catch (e) {
+        const err = e as Error & { statusCode?: number };
+        err.statusCode = 400;
+        done(err, undefined);
+      }
+    },
+  );
+
   // 全局限流：按 IP。登录/注册再单独收紧
   await app.register(rateLimit, {
     max: 240,
