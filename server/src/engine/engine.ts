@@ -15,6 +15,8 @@ export interface Message {
   phase: string;
   /** null = 公开；数组 = 仅这些 seat 可见 */
   visibleTo: number[] | null;
+  /** 附加信息：模型、耗时、token、动作等，前端展示用 */
+  metaJson?: Record<string, unknown>;
   createdAt: string;
 }
 

@@ -96,13 +96,16 @@ export class RoomStore {
 
   async addTokens(roomId: string, userId: string | null, tokens: number) {
     if (!tokens) return;
+    // ★ AI 座位没有 user_id，可能是 null 也可能是空串 —— 空串会被 Postgres
+    //   当成非法 uuid 直接抛错，进而把整次 AI 行动判成失败（表现为重复消息）
+    const uid = userId && userId.trim() ? userId.trim() : null;
     await db.update(rooms)
       .set({ tokensUsed: raw`${rooms.tokensUsed} + ${tokens}` })
       .where(eq(rooms.id, roomId));
-    if (userId) {
+    if (uid) {
       await db.execute(raw`
         INSERT INTO daily_usage (user_id, date, games_played, tokens_used)
-        VALUES (${userId}, CURRENT_DATE, 0, ${tokens})
+        VALUES (${uid}, CURRENT_DATE, 0, ${tokens})
         ON CONFLICT (user_id, date) DO UPDATE SET tokens_used = daily_usage.tokens_used + ${tokens}
       `);
     }

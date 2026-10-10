@@ -27,6 +27,12 @@ interface RoomState {
   myPlayerId: string | null;
   /** 演示模式：没有后端，放脚本对局 */
   demo: boolean;
+  /**
+   * ★ 已处理过的最大 seq。
+   * 不能从 messages 里现算：流式消息在 stream.start 时会被临时移出数组，
+   * 那时算出来的水位会回退，refresh 就会把旧消息当新消息再插一遍（表现为每句话重复）。
+   */
+  seqCursor: number;
 
   socket: RoomSocket | null;
 
@@ -62,12 +68,13 @@ export const useRoom = create<RoomState>((set, get) => ({
   error: null,
   myPlayerId: null,
   demo: false,
+  seqCursor: 0,
   socket: null,
 
   setMyPlayerId: (id) => set({ myPlayerId: id }),
 
   enter: async (roomId, demoGameId) => {
-    set({ loading: true, error: null, roomId, messages: [], summary: null, demo: false });
+    set({ loading: true, error: null, roomId, messages: [], summary: null, demo: false, seqCursor: 0 });
 
     // 1) 拉房间 + 全量消息
     try {
@@ -76,13 +83,16 @@ export const useRoom = create<RoomState>((set, get) => ({
         api.roomMessages(roomId, 0),
       ]);
       const norm = normalizePlayers(players);
+      const loaded = normalizeMessages(messages, norm);
       set({
         room,
         players: norm,
-        messages: normalizeMessages(messages, norm),
+        messages: loaded,
         uiSchema: room.ui_schema_json,
         paused: room.status === 'finished',
         loading: false,
+        // ★ 记录水位，后面 refresh 只拉增量
+        seqCursor: loaded.reduce((mx, m) => Math.max(mx, m.seq), 0),
       });
       if (room.status === 'finished') {
         try {
@@ -115,7 +125,7 @@ export const useRoom = create<RoomState>((set, get) => ({
     set({
       socket: null, roomId: null, room: null, players: [], messages: [],
       summary: null, connected: false, waitingForMe: false, error: null,
-      myPlayerId: null, demo: false,
+      myPlayerId: null, demo: false, seqCursor: 0,
     });
   },
 
@@ -179,21 +189,26 @@ export const useRoom = create<RoomState>((set, get) => ({
   },
 
   refresh: async () => {
-    const { roomId, messages, demo } = get();
+    const { roomId, demo, seqCursor } = get();
     if (!roomId || demo) return;
-    const maxSeq = Math.max(0, ...messages.filter((m) => m.seq < 1_000_000).map((m) => m.seq));
+    const maxSeq = seqCursor;
     try {
       const { room, players } = await api.room(roomId);
       const { messages: fresh } = await api.roomMessages(roomId, maxSeq);
       const norm = normalizePlayers(players);
-      set((s) => ({
-        room,
-        players: norm,
-        messages: [
-          ...s.messages,
-          ...normalizeMessages(fresh, norm).filter((nm) => !s.messages.some((om) => om.seq === nm.seq)),
-        ],
-      }));
+      const incoming = normalizeMessages(fresh, norm);
+      set((s) => {
+        const have = new Set(s.messages.map((m) => m.seq));
+        // 正在流式的那条别动它，等 stream.end 自己收尾
+        const streaming = new Set(s.messages.filter((m) => m.streaming).map((m) => m.seq));
+        const add = incoming.filter((nm) => !have.has(nm.seq) && !streaming.has(nm.seq));
+        return {
+          room,
+          players: norm,
+          messages: [...s.messages, ...add],
+          seqCursor: Math.max(s.seqCursor, ...incoming.map((m) => m.seq), 0),
+        };
+      });
     } catch { /* 网络抖一下就算了 */ }
   },
 }));
@@ -242,6 +257,7 @@ function handleWs(
             round: s.room?.round ?? 0, phase: s.room?.phase ?? '',
             visibleTo: null, createdAt: new Date().toISOString(),
           }],
+          seqCursor: Math.max(s.seqCursor, seq),
         }));
         haptic.light();
       } else {
@@ -252,18 +268,22 @@ function handleWs(
 
     case 'message.stream.start': {
       const seq = e.seq as number;
-      set((s) => ({
-        messages: [
-          ...s.messages.filter((m) => !m.streaming),
-          {
-            id: `stream-${seq}`, seq, senderType: 'ai' as const, senderId: e.senderId as string,
-            senderName: e.name as string, content: '', round: s.room?.round ?? 0,
-            phase: s.room?.phase ?? '', visibleTo: null,
-            createdAt: new Date().toISOString(), streaming: true,
-            avatar: s.players.find((p) => p.id === e.senderId)?.avatar ?? null, isAi: true,
-          },
-        ],
-      }));
+      set((s) => {
+        // 这条已经被 refresh 拉进来了（有 seq），就复用，别再建一条
+        const exists = s.messages.some((m) => m.seq === seq);
+        const base = s.messages.filter((m) => !(m.streaming && !m.content));
+        const fresh = {
+          id: `stream-${seq}`, seq, senderType: 'ai' as const, senderId: e.senderId as string,
+          senderName: e.name as string, content: '', round: s.room?.round ?? 0,
+          phase: s.room?.phase ?? '', visibleTo: null,
+          createdAt: new Date().toISOString(), streaming: true,
+          avatar: s.players.find((p) => p.id === e.senderId)?.avatar ?? null, isAi: true,
+        };
+        return {
+          messages: exists ? base : [...base, fresh],
+          seqCursor: Math.max(s.seqCursor, seq),
+        };
+      });
       break;
     }
 
@@ -279,16 +299,27 @@ function handleWs(
 
     case 'message.stream.end': {
       const seq = e.seq as number;
-      set((s) => ({
-        messages: s.messages.map((m) =>
-          m.seq === seq
-            ? {
-                ...m, content: e.content as string, streaming: false,
-                meta: e.meta as ChatMessage['meta'],
-                visibleTo: e.secret ? [] : m.visibleTo,
-              }
-            : m),
-      }));
+      set((s) => {
+        const hit = s.messages.some((m) => m.seq === seq);
+        const patch = (m: ChatMessage): ChatMessage => ({
+          ...m, content: e.content as string, streaming: false,
+          meta: e.meta as ChatMessage['meta'],
+          visibleTo: e.secret ? [] : m.visibleTo,
+        });
+        return {
+          messages: hit
+            ? s.messages.map((m) => (m.seq === seq ? patch(m) : m))
+            : // 极端情况下这条不在数组里（刚被过滤掉），补回来
+              [...s.messages, patch({
+                id: `stream-${seq}`, seq, senderType: 'ai' as const,
+                senderId: null, senderName: '', content: '',
+                round: s.room?.round ?? 0, phase: s.room?.phase ?? '',
+                visibleTo: null, createdAt: new Date().toISOString(), isAi: true,
+              } as ChatMessage)],
+          seqCursor: Math.max(s.seqCursor, seq),
+        };
+      });
+      void get().refresh();
       break;
     }
 
@@ -348,7 +379,7 @@ function startDemo(
 
   set({
     room, players, uiSchema: game.uiSchema, loading: false,
-    demo: true, connected: true, myPlayerId: 'me', messages: [],
+    demo: true, connected: true, myPlayerId: 'me', messages: [], seqCursor: 0,
   });
 
   // 按脚本逐条播放
@@ -440,6 +471,9 @@ function normalizeMessages(list: ChatMessage[], players: RoomPlayer[]): ChatMess
   const byId = new Map(players.map((p) => [p.id, p]));
   return list
     .filter((m) => m.visibleTo === null)
+    // ★ 空内容的 AI 消息不展示：模型偶尔只回动作不回文本（夜晚空过之类），
+    //   留着就是一个空气泡
+    .filter((m) => m.senderType !== 'ai' || (m.content ?? '').trim().length > 0)
     .map((m) => {
       const p = m.senderId ? byId.get(m.senderId) : null;
       return {

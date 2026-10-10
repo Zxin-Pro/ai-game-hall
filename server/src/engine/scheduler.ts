@@ -189,14 +189,8 @@ export class RoomRuntime {
           await this.maybeEmitIntermediate(action, speaker);
         } else {
           this.state = this.engine.applyAction(this.state, action, this.config);
-          if (action.text) {
-            await this.push({
-              senderType: 'ai', senderId: speaker.id, senderName: speaker.name,
-              content: action.text, round: this.state.round, phase: this.state.phase,
-              visibleTo: action.visibleTo ?? null,
-              metaJson: { kind: action.kind, action: action.raw ?? null },
-            });
-          }
+          // ★ 不要再 push 一条：runAI 里已经先落了流式占位，
+          //   收尾时用 onMessageUpdate 把正文覆盖进去，这里重复 push 会让每句话存两条
         }
         // 每说完一句检查一次胜负，能提前结束就提前结束
         const win = this.engine.checkWin(this.state, this.config);
@@ -250,21 +244,18 @@ export class RoomRuntime {
   }
 
   private async maybeEmitIntermediate(action: Action, speaker: PlayerState): Promise<void> {
-    const parallel = this.config.phases[this.state.phaseIndex]!;
-    if (parallel.key === 'night' || parallel.secret) {
+    const phase = this.config.phases[this.state.phaseIndex]!;
+    if (phase.key === 'night' || phase.secret) {
       // 夜晚/秘密行动：只把「谁做了动作」以小字提示，不暴露内容
       await this.push({
         senderType: 'system', senderId: 'system', senderName: '系统',
         content: `${speaker.name} 已行动`, round: this.state.round, phase: this.state.phase,
         visibleTo: null, metaJson: { kind: 'silent_action' },
       });
-    } else if (action.text) {
-      await this.push({
-        senderType: 'ai', senderId: speaker.id, senderName: speaker.name,
-        content: action.text, round: this.state.round, phase: this.state.phase,
-        visibleTo: action.visibleTo ?? null, metaJson: { kind: action.kind },
-      });
     }
+    // ★ 不再重复 push AI 发言：
+    //   runAI 里已经先落了一条流式占位消息，收尾时用 onMessageUpdate 覆盖成正文。
+    //   这里再 push 一次就会让同一句话在库里存两条。
   }
 
   /* ------------------------ AI 单次行动 ------------------------ */
@@ -332,7 +323,13 @@ export class RoomRuntime {
         meta: { ttftMs: res.ttftMs, genMs: res.genMs, tokens: res.completionTokens, rate: Number(res.rate.toFixed(1)), model: res.model },
       });
 
-      void this.store.addTokens(this.roomId, player.userId ?? null, res.totalTokens);
+      // ★ 记账失败不能把这次发言判为失败 —— 它只是旁路统计，
+      //   一旦抛出去会被外层 catch 当成「AI 走神」，消息就白说了
+      try {
+        await this.store.addTokens(this.roomId, player.userId ?? null, res.totalTokens);
+      } catch (e) {
+        logger.warn({ roomId: this.roomId, err: String(e).slice(0, 160) }, '用量落库失败（忽略）');
+      }
       return action;
     } catch (e) {
       logger.warn({ roomId: this.roomId, player: player.name, err: String(e).slice(0, 200) }, 'AI 行动失败，跳过');
@@ -377,6 +374,7 @@ export class RoomRuntime {
       round: msg.round,
       phase: msg.phase,
       visibleTo: msg.visibleTo,
+      metaJson: msg.metaJson ?? {},
     });
     const full: Message = {
       id: `${this.roomId}:${seq}`,
@@ -388,10 +386,10 @@ export class RoomRuntime {
       round: msg.round,
       phase: msg.phase,
       visibleTo: msg.visibleTo,
+      metaJson: msg.metaJson ?? {},
       createdAt: new Date().toISOString(),
     };
     this.messages.push(full);
-    void msg.metaJson;
     return seq;
   }
 
