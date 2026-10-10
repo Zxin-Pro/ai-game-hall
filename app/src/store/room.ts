@@ -39,6 +39,8 @@ interface RoomState {
   enter: (roomId: string, demoGameId?: string) => Promise<void>;
   leave: () => Promise<void>;
   setMyPlayerId: (id: string | null) => void;
+  /** 房主点开始：调完接口立刻把本地状态推到 running，不等 ws */
+  start: () => Promise<void>;
   send: (text: string) => Promise<void>;
   act: (kind: string, payload?: { targetId?: string; text?: string; amount?: number; option?: string }) => Promise<void>;
   togglePause: () => Promise<void>;
@@ -127,6 +129,25 @@ export const useRoom = create<RoomState>((set, get) => ({
       summary: null, connected: false, waitingForMe: false, error: null,
       myPlayerId: null, demo: false, seqCursor: 0,
     });
+  },
+
+  /**
+   * 房主点开始。
+   * ★ 不能只调接口就完事：界面是靠 room.status 决定显示「开始」还是输入栏的，
+   *   而 status 平时只有 ws 的 room.phase 事件会改。万一 ws 慢/断，
+   *   用户就会觉得「点了没反应」，只能退出去重进 —— 之前就是这个毛病。
+   *   所以这里接口一成功就立刻本地置为 running，ws 事件到了再覆盖一遍。
+   */
+  start: async () => {
+    const { roomId, demo } = get();
+    if (!roomId || demo) return;
+    await api.startRoom(roomId);
+    set((s) => ({
+      room: s.room ? { ...s.room, status: 'running' } : s.room,
+      error: null,
+    }));
+    // ws 可能刚连上还没订阅完，补一次全量，把开局那几条系统消息捞回来
+    setTimeout(() => { void get().refresh(); }, 900);
   },
 
   send: async (text) => {
@@ -223,6 +244,9 @@ function handleWs(
   switch (e.type) {
     case 'subscribed':
       set({ connected: true });
+      // ★ 重连成功先补一次差量：断线期间发生的事（轮次推进、新消息）要追回来，
+      //   不然界面会停在断线那一刻，看着像「卡住不动」
+      void get().refresh();
       break;
 
     case 'room.phase':

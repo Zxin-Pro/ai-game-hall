@@ -25,7 +25,7 @@ export default function RoomScreen() {
 
   const {
     room, players, messages, uiSchema, summary, connected, waitingForMe, paused, loading, error,
-    enter, leave, send, act, togglePause, myPlayerId, setMyPlayerId, demo,
+    enter, leave, start: startRoom, send, act, togglePause, myPlayerId, setMyPlayerId, demo,
   } = useRoom();
 
   const me = useAuth((s) => s.user);
@@ -81,18 +81,19 @@ export default function RoomScreen() {
     return out;
   }, [messages, players]);
 
+  /** 点开始：交给 store 统一处理（它会把状态立刻推上去） */
   const onStart = useCallback(async () => {
     if (!id) return;
     setStarting(true);
     try {
-      await api.startRoom(id);
+      await startRoom();
       haptic.success();
     } catch (e) {
       Alert.alert('开局失败', e instanceof Error ? e.message : '稍后再试');
     } finally {
       setStarting(false);
     }
-  }, [id]);
+  }, [id, startRoom]);
 
   /** 点一下消息 = 引用它 */
   const onPressMessage = useCallback((msg: ChatMessage) => {
