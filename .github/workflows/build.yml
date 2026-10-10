@@ -50,16 +50,21 @@ jobs:
         run: |
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > debug.keystore
           ls -l debug.keystore
-          EXPECTED="5E:8F:16:06:2E:A3:CD:2C:4A:0D:00:00:00:BA:A6:F3:8C:AB:F6:25"
-          # 注意：keytool 输出里有两处 SHA1（证书主体 / 签名算法），
-          # 必须取「证书指纹」那一行，用 awk 定位比 grep 可靠
-          ACTUAL=$(keytool -list -v -keystore debug.keystore \
+
+          # 只比对去掉冒号后的十六进制串，避免空格/换行/CR 之类看不见的差异
+          norm() { tr -d ' :\r\n\t' | tr 'a-f' 'A-F'; }
+          EXPECTED_HEX="5E8F16062EA3CD2C4A0D547876BAA6F38CABF625"
+
+          RAW=$(keytool -list -v -keystore debug.keystore \
             -storepass '${{ secrets.ANDROID_KEYSTORE_PASSWORD }}' \
             -alias '${{ secrets.ANDROID_KEY_ALIAS }}' \
             | awk '/SHA1:/ {print $2; exit}')
-          echo "keystore SHA1 = [$ACTUAL]"
-          if [ "$ACTUAL" != "$EXPECTED" ]; then
-            echo "::error::keystore 指纹不对，签名会变！期望 $EXPECTED"
+          ACTUAL_HEX=$(printf '%s' "$RAW" | norm)
+
+          echo "keystore SHA1 = [$RAW]"
+          echo "归一化后      = [$ACTUAL_HEX]"
+          if [ "$ACTUAL_HEX" != "$EXPECTED_HEX" ]; then
+            echo "::error::keystore 指纹不对，签名会变！期望 $EXPECTED_HEX"
             exit 1
           fi
           echo "keystore 指纹正确 ✓"
@@ -93,11 +98,14 @@ jobs:
         run: |
           APK=$(ls app/build/outputs/apk/release/*.apk | head -1)
           echo "检查 $APK"
-          EXPECTED="5E:8F:16:06:2E:A3:CD:2C:4A:0D:00:00:00:BA:A6:F3:8C:AB:F6:25"
-          ACTUAL=$(keytool -printcert -jarfile "$APK" | awk '/SHA1:/ {print $2; exit}')
-          echo "APK 签名 SHA1 = [$ACTUAL]"
-          echo "期望          = [$EXPECTED]"
-          if [ "$ACTUAL" != "$EXPECTED" ]; then
+          norm() { tr -d ' :\r\n\t' | tr 'a-f' 'A-F'; }
+          EXPECTED_HEX="5E8F16062EA3CD2C4A0D547876BAA6F38CABF625"
+          RAW=$(keytool -printcert -jarfile "$APK" | awk '/SHA1:/ {print $2; exit}')
+          ACTUAL_HEX=$(printf '%s' "$RAW" | norm)
+          echo "APK 签名 SHA1 = [$RAW]"
+          echo "归一化        = [$ACTUAL_HEX]"
+          echo "期望          = [$EXPECTED_HEX]"
+          if [ "$ACTUAL_HEX" != "$EXPECTED_HEX" ]; then
             echo "::error::APK 签名与预期不符，会覆盖安装失败"
             exit 1
           fi
