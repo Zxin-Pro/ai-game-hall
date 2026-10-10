@@ -111,8 +111,12 @@ jobs:
           echo "$REPORT"
 
           EXPECTED_HEX="5E8F16062EA3CD2C4A0D547876BAA6F38CABF625"
+          # 注意：不能按冒号切字段，'SHA-1 digest' 里的 '-' 会被当成分隔符
+          # 这里直接抓 'certificate SHA-1 digest: ' 后面的那串
           ACTUAL_HEX=$(printf '%s' "$REPORT" \
-            | awk -F': ' '/SHA-1 digest/ {print $2; exit}' \
+            | grep -i 'certificate SHA-1 digest' \
+            | head -1 \
+            | sed 's/.*digest: *//' \
             | tr -d ' :\r\n\t' | tr 'a-f' 'A-F')
 
           echo "APK 签名 SHA1 = [$ACTUAL_HEX]"
