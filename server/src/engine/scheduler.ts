@@ -297,7 +297,15 @@ export class RoomRuntime {
       });
 
       const action = this.engine.parseAction(res.text || acc, player, this.config);
-      const shown = action.text?.trim() ? action.text.trim() : res.text.trim();
+      // ★ 展示文本的优先级：
+      //   1) action.text（模型按格式写的台词）
+      //   2) 原文 —— 但原文如果是 JSON（模型只回了动作没写台词），
+      //      直接显示会把 {"kind":"vote",...} 甩到屏幕上，这里要挡掉
+      const rawText = res.text.trim();
+      const looksLikeJson = /^[{[][\s\S]*[}\]]$/.test(rawText) && rawText.length < 800;
+      const shown = action.text?.trim()
+        ? action.text.trim()
+        : (looksLikeJson ? '' : rawText);
 
       // 秘密动作不进公共流，改写成系统提示
       const secret = this.config.phases[this.state.phaseIndex]!.secret
