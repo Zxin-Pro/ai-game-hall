@@ -51,11 +51,13 @@ jobs:
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > debug.keystore
           ls -l debug.keystore
           EXPECTED="5E:8F:16:06:2E:A3:CD:2C:4A:0D:00:00:00:BA:A6:F3:8C:AB:F6:25"
+          # 注意：keytool 输出里有两处 SHA1（证书主体 / 签名算法），
+          # 必须取「证书指纹」那一行，用 awk 定位比 grep 可靠
           ACTUAL=$(keytool -list -v -keystore debug.keystore \
             -storepass '${{ secrets.ANDROID_KEYSTORE_PASSWORD }}' \
             -alias '${{ secrets.ANDROID_KEY_ALIAS }}' \
-            | grep 'SHA1:' | head -1 | sed 's/.*SHA1: //' | tr -d ' ')
-          echo "keystore SHA1 = $ACTUAL"
+            | awk '/SHA1:/ {print $2; exit}')
+          echo "keystore SHA1 = [$ACTUAL]"
           if [ "$ACTUAL" != "$EXPECTED" ]; then
             echo "::error::keystore 指纹不对，签名会变！期望 $EXPECTED"
             exit 1
@@ -91,11 +93,11 @@ jobs:
         run: |
           APK=$(ls app/build/outputs/apk/release/*.apk | head -1)
           echo "检查 $APK"
-          ACTUAL=$(keytool -printcert -jarfile "$APK" \
-            | grep 'SHA1:' | head -1 | sed 's/.*SHA1: //' | tr -d ' ')
-          echo "APK 签名 SHA1 = $ACTUAL"
-          echo "期望         = 5E:8F:16:06:2E:A3:CD:2C:4A:0D:00:00:00:BA:A6:F3:8C:AB:F6:25"
-          if [ "$ACTUAL" != "5E:8F:16:06:2E:A3:CD:2C:4A:0D:00:00:00:BA:A6:F3:8C:AB:F6:25" ]; then
+          EXPECTED="5E:8F:16:06:2E:A3:CD:2C:4A:0D:00:00:00:BA:A6:F3:8C:AB:F6:25"
+          ACTUAL=$(keytool -printcert -jarfile "$APK" | awk '/SHA1:/ {print $2; exit}')
+          echo "APK 签名 SHA1 = [$ACTUAL]"
+          echo "期望          = [$EXPECTED]"
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
             echo "::error::APK 签名与预期不符，会覆盖安装失败"
             exit 1
           fi
