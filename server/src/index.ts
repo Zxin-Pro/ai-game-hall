@@ -67,7 +67,9 @@ export async function buildServer() {
     keyGenerator: (req) => (req.headers['x-device-id'] as string) ?? req.ip,
   });
 
-  await app.register(multipart, { limits: { fileSize: 8 * 1024 * 1024 } });
+  // ★ 文件上限是全局的：管理端的 APK 发布要走同一条 multipart 通道，
+  //   所以这里给到 256MB。用户上传（分享图）在路由里自己按类型挡。
+  await app.register(multipart, { limits: { fileSize: 256 * 1024 * 1024 } });
 
   mkdirSync(resolve(env.UPLOAD_DIR), { recursive: true });
   await app.register(fastifyStatic, {

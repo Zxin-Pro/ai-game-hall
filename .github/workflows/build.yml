@@ -192,8 +192,11 @@ jobs:
           fi
           NOTE=$(git log -1 --pretty=%s)
           echo "登记 $APP_VERSION_NAME ($APP_VERSION_CODE) 到 $URL"
-          curl -sS -m 600 -X POST "$URL/api/admin/publish-apk" \
+          # ★ 必须去掉 Expect: 100-continue：大包上传时 curl 会先等服务器回 100，
+          #   而链路里这一等会直接挂住（表现为等满超时、0 字节）
+          curl -sS --http1.1 -m 900 -X POST "$URL/api/admin/publish-apk" \
             -H "x-admin-key: $KEY" \
+            -H 'Expect:' \
             -F "file=@out/ai-game-hall.apk" \
             -F "versionCode=$APP_VERSION_CODE" \
             -F "versionName=$APP_VERSION_NAME" \
